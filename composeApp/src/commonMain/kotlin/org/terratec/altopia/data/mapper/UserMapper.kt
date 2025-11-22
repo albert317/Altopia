@@ -1,25 +1,25 @@
 package org.terratec.altopia.data.mapper
 
-import org.terratec.altopia.data.remote.UserDto
-import org.terratec.altopia.data.remote.VideoDto
+import org.terratec.altopia.data.remote.dto.response.UserResponse
+import org.terratec.altopia.data.remote.dto.response.VideoResponse
 import org.terratec.altopia.domain.model.User
 import org.terratec.altopia.domain.model.Video
 
 object UserMapper {
-    fun dtoToDomain(dto: UserDto): User {
+    fun userResponseToDomain(response: UserResponse): User {
         return User(
-            id = dto.id,
-            name = dto.name,
-            email = dto.email
+            id = response.id,
+            name = response.name,
+            email = response.email
         )
     }
 
-    fun dtoToDomain(dto: VideoDto): Video {
+    fun videoResponseToDomain(response: VideoResponse): Video {
         return Video(
-            id = dto.id,
-            createdAt = dto.createdAt,
-            videoLink = dto.videoLink,
-            isFinished = dto.isFinished
+            id = response.id,
+            createdAt = response.createdAt,
+            videoLink = response.videoLink,
+            isFinished = response.isFinished
         )
     }
 }

@@ -1,10 +1,10 @@
-package org.terratec.altopia.data.remote
+package org.terratec.altopia.data.remote.dto.response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class VideoDto(
+data class VideoResponse(
     val id: Long,
     @SerialName("created_at")
     val createdAt: String,
