@@ -7,14 +7,14 @@ import org.terratec.altopia.data.remote.dto.response.UserResponse
  * Coordinates data fetching from remote sources (API).
  */
 interface UserRemoteDataSource {
-    
+
     /**
      * Get a user by ID from remote source
      * @param userId User ID
      * @return Result with UserResponse or error
      */
     suspend fun getUser(userId: Long): Result<UserResponse>
-    
+
     /**
      * Get all users from remote source
      * @return Result with list of UserResponse or error

@@ -8,18 +8,19 @@ import org.terratec.altopia.data.remote.dto.response.UserResponse
 /**
  * Implementation of UserApiService using Ktor HttpClient.
  * Handles the actual HTTP communication with the backend API.
+ * Uses a pre-configured HttpClient with base URL already set.
  */
 class UserApiServiceImpl(
     private val httpClient: HttpClient
 ) : UserApiService {
-    
-    private val baseUrl = "https://jsonplaceholder.typicode.com"
-    
+
     override suspend fun getUser(userId: Long): UserResponse {
-        return httpClient.get("$baseUrl/users/$userId").body()
+        // Use relative URL without leading slash - base URL is configured in the injected HttpClient
+        return httpClient.get("users/$userId").body()
     }
-    
+
     override suspend fun getUsers(): List<UserResponse> {
-        return httpClient.get("$baseUrl/users").body()
+        // Use relative URL without leading slash - base URL is configured in the injected HttpClient
+        return httpClient.get("users").body()
     }
 }

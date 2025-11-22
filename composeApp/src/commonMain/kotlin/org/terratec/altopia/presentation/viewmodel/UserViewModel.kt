@@ -30,7 +30,10 @@ class UserViewModel(
                     _uiState.value = _uiState.value.copy(isLoading = false, user = user)
                 }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = error.message ?: "Unknown error")
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = error.message ?: "Unknown error"
+                    )
                 }
         }
     }
@@ -43,7 +46,10 @@ class UserViewModel(
                     _uiState.value = _uiState.value.copy(isLoading = false, videos = videos)
                 }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = error.message ?: "Unknown error")
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = error.message ?: "Unknown error"
+                    )
                 }
         }
     }

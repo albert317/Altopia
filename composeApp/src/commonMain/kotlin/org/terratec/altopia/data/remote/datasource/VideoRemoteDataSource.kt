@@ -7,7 +7,7 @@ import org.terratec.altopia.data.remote.dto.response.VideoResponse
  * Coordinates data fetching from remote sources (API).
  */
 interface VideoRemoteDataSource {
-    
+
     /**
      * Get all videos from remote source
      * @return Result with list of VideoResponse or error

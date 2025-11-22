@@ -10,7 +10,7 @@ import org.terratec.altopia.data.remote.dto.response.VideoResponse
 class VideoRemoteDataSourceImpl(
     private val apiService: VideoApiService
 ) : VideoRemoteDataSource {
-    
+
     override suspend fun getVideos(): Result<List<VideoResponse>> {
         return try {
             val response = apiService.getVideos()

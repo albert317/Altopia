@@ -10,7 +10,7 @@ import org.terratec.altopia.data.remote.dto.response.UserResponse
 class UserRemoteDataSourceImpl(
     private val apiService: UserApiService
 ) : UserRemoteDataSource {
-    
+
     override suspend fun getUser(userId: Long): Result<UserResponse> {
         return try {
             val response = apiService.getUser(userId)
@@ -19,7 +19,7 @@ class UserRemoteDataSourceImpl(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun getUsers(): Result<List<UserResponse>> {
         return try {
             val response = apiService.getUsers()
