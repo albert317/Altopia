@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
+import org.terratec.altopia.presentation.ui.components.BaseScreen
 import org.terratec.altopia.presentation.viewmodel.LoginUiState
 import org.terratec.altopia.presentation.viewmodel.LoginViewModel
 
@@ -37,8 +38,6 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     viewModel: LoginViewModel = koinViewModel()
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsState()
     
     LaunchedEffect(uiState) {
@@ -46,74 +45,109 @@ fun LoginScreen(
             onLoginSuccess()
         }
     }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Iniciar Sesión",
-            style = MaterialTheme.typography.headlineMedium
-        )
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        OutlinedTextField(
-            value = email,
-            onValueChange = { 
-                email = it
-                viewModel.clearError()
-            },
-            label = { Text("Email") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = uiState !is LoginUiState.Loading
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        OutlinedTextField(
-            value = password,
-            onValueChange = { 
-                password = it
-                viewModel.clearError()
-            },
-            label = { Text("Contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = uiState !is LoginUiState.Loading
-        )
-        
-        if (uiState is LoginUiState.Error) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = (uiState as LoginUiState.Error).message,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Button(
-            onClick = { viewModel.login(email, password) },
-            enabled = uiState !is LoginUiState.Loading && email.isNotBlank() && password.isNotBlank(),
-            modifier = Modifier.fillMaxWidth()
+
+    LoginScreenContent(
+        uiState = uiState,
+        onLoginClick = { email, password ->
+            viewModel.login(email, password)
+        },
+        onEmailChange = { viewModel.clearError() },
+        onPasswordChange = { viewModel.clearError() }
+    )
+}
+
+@Composable
+fun LoginScreenContent(
+    uiState: LoginUiState,
+    onLoginClick: (String, String) -> Unit,
+    onEmailChange: () -> Unit,
+    onPasswordChange: () -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    BaseScreen {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (uiState is LoginUiState.Loading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.height(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+            Text(
+                text = "Iniciar Sesión",
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = {
+                    email = it
+                    onEmailChange()
+                },
+                label = { Text("Email") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = uiState !is LoginUiState.Loading
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = {
+                    password = it
+                    onPasswordChange()
+                },
+                label = { Text("Contraseña") },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = uiState !is LoginUiState.Loading
+            )
+
+            if (uiState is LoginUiState.Error) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = (uiState as LoginUiState.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
                 )
-            } else {
-                Text("Iniciar Sesión")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = { onLoginClick(email, password) },
+                enabled = uiState !is LoginUiState.Loading && email.isNotBlank() && password.isNotBlank(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (uiState is LoginUiState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.height(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Iniciar Sesión")
+                }
             }
         }
+    }
+}
+
+@org.jetbrains.compose.ui.tooling.preview.Preview
+@Composable
+fun LoginScreenPreview() {
+    MaterialTheme {
+        LoginScreenContent(
+            uiState = LoginUiState.Idle,
+            onLoginClick = { _, _ -> },
+            onEmailChange = {},
+            onPasswordChange = {}
+        )
     }
 }

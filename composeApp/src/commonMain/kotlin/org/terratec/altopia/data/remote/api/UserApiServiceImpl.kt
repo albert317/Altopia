@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import org.terratec.altopia.data.remote.dto.response.UserResponse
+import org.terratec.altopia.data.remote.util.safeApiCall
 
 /**
  * Implementation of UserApiService using Ktor HttpClient.
@@ -16,11 +17,15 @@ class UserApiServiceImpl(
 
     override suspend fun getUser(userId: Long): UserResponse {
         // Use relative URL without leading slash - base URL is configured in the injected HttpClient
-        return httpClient.get("users/$userId").body()
+        return safeApiCall {
+            httpClient.get("users/$userId")
+        }
     }
 
     override suspend fun getUsers(): List<UserResponse> {
         // Use relative URL without leading slash - base URL is configured in the injected HttpClient
-        return httpClient.get("users").body()
+        return safeApiCall {
+            httpClient.get("users")
+        }
     }
 }

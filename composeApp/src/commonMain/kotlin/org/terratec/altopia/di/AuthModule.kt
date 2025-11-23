@@ -9,6 +9,8 @@ import org.terratec.altopia.data.local.session.SessionManagerImpl
 import org.terratec.altopia.data.mapper.AuthMapper
 import org.terratec.altopia.data.remote.api.AuthApiService
 import org.terratec.altopia.data.remote.api.AuthApiServiceImpl
+import org.terratec.altopia.data.remote.datasource.AuthDataSource
+import org.terratec.altopia.data.remote.datasource.AuthDataSourceImpl
 import org.terratec.altopia.data.repository.AuthRepositoryImpl
 import org.terratec.altopia.domain.repository.AuthRepository
 import org.terratec.altopia.domain.usecase.auth.GetCurrentUserUseCase
@@ -39,11 +41,18 @@ val authModule = module {
             sessionManager = get()
         )
     }
+
+    // Data Source
+    single<AuthDataSource> {
+        AuthDataSourceImpl(
+            apiService = get()
+        )
+    }
     
     // Repository
     single<AuthRepository> {
         AuthRepositoryImpl(
-            authApiService = get(),
+            authDataSource = get(),
             sessionManager = get(),
             mapper = get()
         )

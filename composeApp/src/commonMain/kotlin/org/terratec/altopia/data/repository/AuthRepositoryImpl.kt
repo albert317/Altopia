@@ -2,7 +2,7 @@ package org.terratec.altopia.data.repository
 
 import org.terratec.altopia.data.local.session.SessionManager
 import org.terratec.altopia.data.mapper.AuthMapper
-import org.terratec.altopia.data.remote.api.AuthApiService
+import org.terratec.altopia.data.remote.datasource.AuthDataSource
 import org.terratec.altopia.domain.model.User
 import org.terratec.altopia.domain.repository.AuthRepository
 
@@ -11,14 +11,14 @@ import org.terratec.altopia.domain.repository.AuthRepository
  * Coordinates authentication operations between API service and session manager.
  */
 class AuthRepositoryImpl(
-    private val authApiService: AuthApiService,
+    private val authDataSource: AuthDataSource,
     private val sessionManager: SessionManager,
     private val mapper: AuthMapper
 ) : AuthRepository {
     
     override suspend fun login(email: String, password: String): Result<User> {
         return try {
-            val response = authApiService.login(email, password)
+            val response = authDataSource.login(email, password)
             val session = mapper.loginResponseToAuthSession(response)
             sessionManager.saveSession(session)
             Result.success(session.user)
@@ -30,7 +30,7 @@ class AuthRepositoryImpl(
     override suspend fun logout(): Result<Unit> {
         return try {
             // Try to logout from server
-            authApiService.logout()
+            authDataSource.logout()
             // Always clear local session, even if server logout fails
             sessionManager.clearSession()
             Result.success(Unit)
@@ -50,7 +50,7 @@ class AuthRepositoryImpl(
             val currentSession = sessionManager.getSession()
                 ?: return Result.failure(Exception("No active session to refresh"))
             
-            val response = authApiService.refreshToken(currentSession.refreshToken)
+            val response = authDataSource.refreshToken(currentSession.refreshToken)
             val newSession = mapper.loginResponseToAuthSession(response)
             sessionManager.saveSession(newSession)
             
