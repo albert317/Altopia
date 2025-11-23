@@ -35,4 +35,20 @@ interface AuthApiService {
      * @return UserResponse with user data
      */
     suspend fun getCurrentUser(): UserResponse
+    
+    /**
+     * Sends a password recovery email.
+     * 
+     * @param email User's email
+     */
+    suspend fun recoverPassword(email: String)
+    
+    /**
+     * Updates user information.
+     * 
+     * @param password New password (optional)
+     * @param data User metadata (optional)
+     * @return Updated UserResponse
+     */
+    suspend fun updateUser(password: String? = null, data: Map<String, String>? = null): UserResponse
 }

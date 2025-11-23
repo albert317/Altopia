@@ -63,4 +63,6 @@ val authModule = module {
     factory { LogoutUseCase(get()) }
     factory { GetCurrentUserUseCase(get()) }
     factory { IsAuthenticatedUseCase(get()) }
+    factory { org.terratec.altopia.domain.usecase.ForgotPasswordUseCase(get()) }
+    factory { org.terratec.altopia.domain.usecase.UpdatePasswordUseCase(get()) }
 }

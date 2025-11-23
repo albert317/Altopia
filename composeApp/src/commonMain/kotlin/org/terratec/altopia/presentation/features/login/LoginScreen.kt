@@ -8,9 +8,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -19,18 +29,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.terratec.altopia.domain.model.User
 import org.terratec.altopia.presentation.model.ManagedDialogConfig
 import org.terratec.altopia.presentation.ui.components.BaseScreen
+import org.terratec.altopia.presentation.ui.theme.AppTheme
 
+// ===== PARTE 1: Screen (Stateful) =====
 /**
- * Login screen with email and password fields following MVI pattern.
+ * Login screen with email and password authentication.
  */
 @Composable
 fun LoginScreen(
@@ -41,14 +62,14 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
     val dialogState by viewModel.managedDialogState.collectAsState()
 
-    // Colectar eventos una sola vez
+    // Event collection
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->
             when (event) {
                 is LoginEvent.NavigateToHome -> onNavigateToHome(event.user)
                 LoginEvent.NavigateToForgotPassword -> onNavigateToForgotPassword()
                 is LoginEvent.ShowToast -> {
-                    // TODO: Implementar sistema de toasts si es necesario
+                    // TODO: Implement toast system if needed
                 }
             }
         }
@@ -61,6 +82,7 @@ fun LoginScreen(
     )
 }
 
+// ===== PARTE 2: Content (Stateless) =====
 /**
  * Stateless content composable for Login screen.
  */
@@ -71,107 +93,289 @@ private fun LoginContent(
     dialogState: ManagedDialogConfig? = null
 ) {
     BaseScreen(
-        managedDialogState = dialogState
+        managedDialogState = dialogState,
+        showProgress = uiState.isLoading
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-        Text(
-            text = "Iniciar Sesión",
-            style = MaterialTheme.typography.headlineMedium
-        )
+            // Top spacing
+            Spacer(modifier = Modifier.height(48.dp))
 
-        Spacer(modifier = Modifier.height(32.dp))
+            // Logo/Brand area
+            BrandSection()
 
-        // Email Field
-        OutlinedTextField(
-            value = uiState.email,
-            onValueChange = { onIntent(LoginIntent.EmailChanged(it)) },
-            label = { Text("Email") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = !uiState.isLoading,
-            isError = !uiState.isEmailValid,
-            supportingText = if (!uiState.isEmailValid) {
-                { Text("Email inválido") }
-            } else null
-        )
+            Spacer(modifier = Modifier.height(48.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+            // Welcome section
+            WelcomeSection()
 
-        // Password Field
-        OutlinedTextField(
-            value = uiState.password,
-            onValueChange = { onIntent(LoginIntent.PasswordChanged(it)) },
-            label = { Text("Contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = !uiState.isLoading,
-            isError = !uiState.isPasswordValid,
-            supportingText = if (!uiState.isPasswordValid) {
-                { Text("La contraseña debe tener al menos 6 caracteres") }
-            } else null
-        )
+            Spacer(modifier = Modifier.height(32.dp))
 
-        // Error Message
-        if (uiState.errorMessage != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = uiState.errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+            // Login form
+            LoginForm(
+                email = uiState.email,
+                password = uiState.password,
+                isEmailValid = uiState.isEmailValid,
+                isPasswordValid = uiState.isPasswordValid,
+                errorMessage = uiState.errorMessage,
+                isLoading = uiState.isLoading,
+                onEmailChange = { onIntent(LoginIntent.EmailChanged(it)) },
+                onPasswordChange = { onIntent(LoginIntent.PasswordChanged(it)) },
+                onLoginClick = { onIntent(LoginIntent.SubmitCredentials) },
+                onForgotPasswordClick = { onIntent(LoginIntent.ForgotPasswordClicked) }
             )
+
+            Spacer(modifier = Modifier.weight(1f))
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Login Button
-        Button(
-            onClick = { onIntent(LoginIntent.SubmitCredentials) },
-            enabled = !uiState.isLoading && 
-                     uiState.email.isNotBlank() && 
-                     uiState.password.isNotBlank(),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            } else {
-                Text("Iniciar Sesión")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Forgot Password
-        TextButton(
-            onClick = { onIntent(LoginIntent.ForgotPasswordClicked) },
-            enabled = !uiState.isLoading
-        ) {
-            Text("¿Olvidaste tu contraseña?")
-        }
-    }
     }
 }
 
-/**
- * Preview for LoginScreen.
- */
-@org.jetbrains.compose.ui.tooling.preview.Preview
+@Composable
+private fun BrandSection() {
+    // Placeholder for logo - could be replaced with actual logo image
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Logo placeholder (you can replace with actual logo)
+        Text(
+            text = "🏢",
+            style = MaterialTheme.typography.displayLarge,
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = "Altopia",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun WelcomeSection() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Bienvenido",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = "Gestiona tu condominio de manera simple y eficiente",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun LoginForm(
+    email: String,
+    password: String,
+    isEmailValid: Boolean,
+    isPasswordValid: Boolean,
+    errorMessage: String?,
+    isLoading: Boolean,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onLoginClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Email Field
+        OutlinedTextField(
+            value = email,
+            onValueChange = onEmailChange,
+            label = { Text("Correo electrónico") },
+            placeholder = { Text("nombre@ejemplo.com") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Email,
+                    contentDescription = "Email icon"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            enabled = !isLoading,
+            isError = !isEmailValid,
+            supportingText = if (!isEmailValid) {
+                { 
+                    Text(
+                        text = "Por favor, ingresa un correo válido",
+                        style = MaterialTheme.typography.bodySmall
+                    ) 
+                }
+            } else null,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
+        )
+
+        // Password Field
+        OutlinedTextField(
+            value = password,
+            onValueChange = onPasswordChange,
+            label = { Text("Contraseña") },
+            placeholder = { Text("Tu contraseña") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = "Password icon"
+                )
+            },
+            trailingIcon = {
+                IconButton(
+                    onClick = { passwordVisible = !passwordVisible },
+                    enabled = !isLoading
+                ) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                        contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                    )
+                }
+            },
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            enabled = !isLoading,
+            isError = !isPasswordValid,
+            supportingText = if (!isPasswordValid) {
+                { 
+                    Text(
+                        text = "La contraseña debe tener al menos 6 caracteres",
+                        style = MaterialTheme.typography.bodySmall
+                    ) 
+                }
+            } else null,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { 
+                    focusManager.clearFocus()
+                    if (email.isNotBlank() && password.isNotBlank()) {
+                        onLoginClick()
+                    }
+                }
+            )
+        )
+
+        // Error Message
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Login Button
+        Button(
+            onClick = onLoginClick,
+            enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = "Iniciar Sesión",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+
+        // Forgot Password
+        TextButton(
+            onClick = onForgotPasswordClick,
+            enabled = !isLoading,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            Text(
+                text = "¿Olvidaste tu contraseña?",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+// ===== PARTE 3: Preview =====
+@Preview
 @Composable
 fun LoginScreenPreview() {
-    MaterialTheme {
+    AppTheme {
         LoginContent(
-            uiState = LoginUiState(),
+            uiState = LoginUiState(
+                email = "",
+                password = "",
+                isLoading = false,
+                errorMessage = null
+            ),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun LoginScreenErrorPreview() {
+    AppTheme {
+        LoginContent(
+            uiState = LoginUiState(
+                email = "test@example.com",
+                password = "12345",
+                isLoading = false,
+                errorMessage = "Credenciales incorrectas. Por favor, verifica tus datos.",
+                isEmailValid = true,
+                isPasswordValid = false
+            ),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun LoginScreenLoadingPreview() {
+    AppTheme {
+        LoginContent(
+            uiState = LoginUiState(
+                email = "user@example.com",
+                password = "password123",
+                isLoading = true
+            ),
             onIntent = {}
         )
     }

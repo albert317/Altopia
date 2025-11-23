@@ -6,6 +6,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import org.terratec.altopia.data.local.session.SessionManager
 import org.terratec.altopia.data.remote.dto.auth.LoginRequest
@@ -59,6 +60,29 @@ class AuthApiServiceImpl(
         return safeApiCall {
             httpClient.get("auth/v1/user") {
                 header("Authorization", "Bearer ${session.accessToken}")
+            }
+        }
+    }
+
+    override suspend fun recoverPassword(email: String) {
+        safeApiCall<Unit> {
+            httpClient.post("auth/v1/recover") {
+                setBody(org.terratec.altopia.data.remote.dto.auth.RecoverPasswordRequest(
+                    email = email,
+                    redirectTo = "io.altopia.app://auth/callback"
+                ))
+            }
+        }
+    }
+
+    override suspend fun updateUser(password: String?, data: Map<String, String>?): UserResponse {
+        val session = sessionManager.getSession()
+            ?: throw IllegalStateException("No active session")
+
+        return safeApiCall {
+            httpClient.put("auth/v1/user") {
+                header("Authorization", "Bearer ${session.accessToken}")
+                setBody(org.terratec.altopia.data.remote.dto.auth.UserUpdateRequest(password = password, data = data))
             }
         }
     }

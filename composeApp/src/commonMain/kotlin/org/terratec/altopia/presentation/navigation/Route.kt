@@ -14,5 +14,11 @@ sealed interface Route {
     data object Login : Route
     
     @Serializable
+    data object ForgotPassword : Route
+    
+    @Serializable
+    data object ResetPassword : Route
+    
+    @Serializable
     data object Home : Route
 }

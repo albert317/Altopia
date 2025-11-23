@@ -65,4 +65,22 @@ class AuthRepositoryImpl(
     override fun isAuthenticated(): Boolean {
         return sessionManager.isSessionValid()
     }
+    
+    override suspend fun recoverPassword(email: String): Result<Unit> {
+        return try {
+            authDataSource.recoverPassword(email)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun updatePassword(password: String): Result<Unit> {
+        return try {
+            authDataSource.updateUser(password = password)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

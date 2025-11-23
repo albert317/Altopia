@@ -43,4 +43,20 @@ interface AuthRepository {
      * @return true if the user is authenticated and the session is valid, false otherwise
      */
     fun isAuthenticated(): Boolean
+    
+    /**
+     * Sends a password recovery email to the specified email address.
+     * 
+     * @param email User's email address
+     * @return Result indicating success or failure
+     */
+    suspend fun recoverPassword(email: String): Result<Unit>
+    
+    /**
+     * Updates the user's password.
+     * 
+     * @param password New password
+     * @return Result indicating success or failure
+     */
+    suspend fun updatePassword(password: String): Result<Unit>
 }

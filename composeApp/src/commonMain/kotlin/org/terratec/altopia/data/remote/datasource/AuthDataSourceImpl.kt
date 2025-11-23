@@ -23,4 +23,14 @@ class AuthDataSourceImpl(
     override suspend fun getCurrentUser(): UserResponse {
         return apiService.getCurrentUser()
     }
+
+    override suspend fun recoverPassword(email: String) {
+        apiService.recoverPassword(email)
+    }
+
+    override suspend fun updateUser(password: String?, data: Map<String, String>?): UserResponse {
+        return apiService.updateUser(password, data)
+    }
+
+
 }
