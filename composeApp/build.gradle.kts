@@ -34,6 +34,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.koin.android)
+            implementation(libs.androidx.datastore.preferences.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -56,6 +57,9 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
+            
+            // DataStore
+            implementation(libs.androidx.datastore.preferences)
         }
         
         iosMain.dependencies {

@@ -3,9 +3,12 @@ package org.terratec.altopia.di
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
 
-fun initKoin(config: KoinAppDeclaration? = null) {
+fun initKoin() {
     startKoin {
-        config?.invoke(this)
-        modules(networkModule, appModule)
+        modules(
+            networkModule,
+            appModule,
+            authModule
+        )
     }
 }

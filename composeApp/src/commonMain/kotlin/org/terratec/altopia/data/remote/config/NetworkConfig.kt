@@ -13,6 +13,7 @@ object NetworkConfig {
      */
     object Supabase {
         const val BASE_URL = "https://thvijyqaigfbfbbrmknx.supabase.co/rest/v1/"
+        const val AUTH_BASE_URL = "https://thvijyqaigfbfbbrmknx.supabase.co/"
         const val API_KEY =
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRodmlqeXFhaWdmYmZiYnJta254Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMzM4ODgsImV4cCI6MjA3ODcwOTg4OH0.CNeEfs62T930qQGsgXUzkdfjdRMV57V8aa59j1vVR4c"
     }
