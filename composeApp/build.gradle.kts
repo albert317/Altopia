@@ -19,6 +19,7 @@ kotlin {
     }
     
     listOf(
+        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -47,6 +48,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.androidx.lifecycle.viewmodel)
             
+            // Navigation
+            implementation(libs.androidx.navigation.compose)
+            
             // Koin
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
@@ -65,6 +69,7 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }
+        
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }

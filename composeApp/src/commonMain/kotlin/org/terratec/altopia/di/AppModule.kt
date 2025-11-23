@@ -1,5 +1,6 @@
 package org.terratec.altopia.di
 
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.terratec.altopia.data.mapper.UserMapper
@@ -13,7 +14,14 @@ import org.terratec.altopia.data.remote.datasource.VideoRemoteDataSource
 import org.terratec.altopia.data.remote.datasource.VideoRemoteDataSourceImpl
 import org.terratec.altopia.data.repository.UserRepositoryImpl
 import org.terratec.altopia.domain.repository.UserRepository
+import org.terratec.altopia.presentation.viewmodel.HomeViewModel
+import org.terratec.altopia.presentation.viewmodel.LoginViewModel
+import org.terratec.altopia.presentation.viewmodel.SplashViewModel
 
+/**
+ * Koin module for application dependencies.
+ * Provides repositories, use cases, and ViewModels.
+ */
 val appModule = module {
     // ===== Network Layer =====
     // Network configuration is now in NetworkModule
@@ -49,4 +57,7 @@ val appModule = module {
 
     // ===== ViewModels =====
     single { org.terratec.altopia.presentation.viewmodel.UserViewModel(get(), get()) }
+    viewModelOf(::SplashViewModel)
+    viewModelOf(::LoginViewModel)
+    viewModelOf(::HomeViewModel)
 }

@@ -4,14 +4,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
-import org.terratec.altopia.presentation.ui.UserScreen
+import org.terratec.altopia.presentation.navigation.AppNavHost
 
 @Composable
 @Preview
 fun App() {
     KoinContext {
         MaterialTheme {
-            UserScreen()
+            AppNavHost()
         }
     }
 }
