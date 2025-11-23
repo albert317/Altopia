@@ -14,8 +14,8 @@ import org.terratec.altopia.data.remote.datasource.VideoRemoteDataSource
 import org.terratec.altopia.data.remote.datasource.VideoRemoteDataSourceImpl
 import org.terratec.altopia.data.repository.UserRepositoryImpl
 import org.terratec.altopia.domain.repository.UserRepository
+import org.terratec.altopia.presentation.features.login.LoginViewModel
 import org.terratec.altopia.presentation.viewmodel.HomeViewModel
-import org.terratec.altopia.presentation.viewmodel.LoginViewModel
 import org.terratec.altopia.presentation.viewmodel.SplashViewModel
 
 /**

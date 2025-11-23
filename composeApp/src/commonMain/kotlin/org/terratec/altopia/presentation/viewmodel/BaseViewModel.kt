@@ -33,7 +33,17 @@ abstract class BaseViewModel<UI_STATE, INTENT, EVENT> : ViewModel() {
         viewModelScope.launch {
             try {
                 intents.collect { intent ->
-                    handleIntent(intent)
+                    // Lanzar cada intent en su propia coroutina para procesamiento paralelo
+                    // Esto previene que intents lentos bloqueen intents rápidos
+                    launch {
+                        try {
+                            handleIntent(intent)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            // Los errores en handleIntent se capturan aquí
+                            // para que no afecten el flujo de otros intents
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

@@ -5,8 +5,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import org.terratec.altopia.presentation.features.login.LoginScreen
 import org.terratec.altopia.presentation.ui.HomeScreen
-import org.terratec.altopia.presentation.ui.LoginScreen
 import org.terratec.altopia.presentation.ui.SplashScreen
 
 /**
@@ -38,7 +38,7 @@ fun AppNavHost(
         
         composable<Route.Login> {
             LoginScreen(
-                onLoginSuccess = {
+                onNavigateToHome = { user ->
                     navController.navigate(Route.Home) {
                         popUpTo(Route.Login) { inclusive = true }
                     }
