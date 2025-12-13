@@ -45,6 +45,7 @@ import org.terratec.altopia.presentation.ui.theme.AppTheme
 @Composable
 fun ResetPasswordScreen(
     onNavigateToHome: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     viewModel: ResetPasswordViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -54,6 +55,7 @@ fun ResetPasswordScreen(
         viewModel.event.collect { event ->
             when (event) {
                 ResetPasswordEvent.NavigateToHome -> onNavigateToHome()
+                ResetPasswordEvent.NavigateToLogin -> onNavigateToLogin()
             }
         }
     }

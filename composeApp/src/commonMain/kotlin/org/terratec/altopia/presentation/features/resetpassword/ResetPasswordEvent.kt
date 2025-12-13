@@ -5,4 +5,5 @@ package org.terratec.altopia.presentation.features.resetpassword
  */
 sealed class ResetPasswordEvent {
     data object NavigateToHome : ResetPasswordEvent()
+    data object NavigateToLogin : ResetPasswordEvent()
 }

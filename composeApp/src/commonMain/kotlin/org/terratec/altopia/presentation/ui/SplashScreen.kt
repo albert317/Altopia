@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.koin.compose.viewmodel.koinViewModel
+import org.terratec.altopia.domain.model.User
 import org.terratec.altopia.presentation.viewmodel.SplashUiState
 import org.terratec.altopia.presentation.viewmodel.SplashViewModel
 
@@ -20,15 +21,15 @@ import org.terratec.altopia.presentation.viewmodel.SplashViewModel
  */
 @Composable
 fun SplashScreen(
-    onNavigateToHome: () -> Unit,
+    onNavigateToHome: (User) -> Unit,
     onNavigateToLogin: () -> Unit,
     viewModel: SplashViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
     LaunchedEffect(uiState) {
-        when (uiState) {
-            is SplashUiState.NavigateToHome -> onNavigateToHome()
+        when (val state = uiState) {
+            is SplashUiState.NavigateToHome -> onNavigateToHome(state.user)
             is SplashUiState.NavigateToLogin -> onNavigateToLogin()
             SplashUiState.Loading -> { /* Stay on splash */ }
         }

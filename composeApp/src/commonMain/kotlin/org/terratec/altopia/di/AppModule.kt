@@ -17,8 +17,13 @@ import org.terratec.altopia.domain.repository.UserRepository
 import org.terratec.altopia.presentation.features.forgotpassword.ForgotPasswordViewModel
 import org.terratec.altopia.presentation.features.login.LoginViewModel
 import org.terratec.altopia.presentation.features.resetpassword.ResetPasswordViewModel
-import org.terratec.altopia.presentation.viewmodel.HomeViewModel
+import org.terratec.altopia.presentation.features.home.HomeViewModel
 import org.terratec.altopia.presentation.viewmodel.SplashViewModel
+import org.terratec.altopia.data.remote.api.ReceiptApiService
+import org.terratec.altopia.data.remote.api.ReceiptApiServiceImpl
+import org.terratec.altopia.data.remote.api.ExpenseApiService
+import org.terratec.altopia.data.remote.api.ExpenseApiServiceImpl
+import org.terratec.altopia.presentation.features.profile_selection.ProfileSelectionViewModel
 
 /**
  * Koin module for application dependencies.
@@ -36,6 +41,8 @@ val appModule = module {
     single<VideoApiService> {
         VideoApiServiceImpl(get(named("supabase")))
     }
+    single<ReceiptApiService> { ReceiptApiServiceImpl() }
+    single<ExpenseApiService> { ExpenseApiServiceImpl() }
 
     // ===== Data Sources =====
     single<UserRemoteDataSource> { UserRemoteDataSourceImpl(get()) }
@@ -60,8 +67,11 @@ val appModule = module {
     // ===== ViewModels =====
     single { org.terratec.altopia.presentation.viewmodel.UserViewModel(get(), get()) }
     viewModelOf(::SplashViewModel)
+    single { org.terratec.altopia.presentation.navigation.DeepLinkHandler(get()) }
+    
     viewModelOf(::LoginViewModel)
     viewModelOf(::HomeViewModel)
     viewModelOf(::ForgotPasswordViewModel)
     viewModelOf(::ResetPasswordViewModel)
+    viewModelOf(::ProfileSelectionViewModel)
 }

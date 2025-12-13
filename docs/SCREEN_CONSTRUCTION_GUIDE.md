@@ -130,10 +130,10 @@ fun PaymentsScreenPreview() {
 **TODAS las pantallas deben usar `BaseScreen` como contenedor raíz.**
 
 ```kotlin
-import org.terratec.altopia.presentation.ui.components.BaseScreen
+// import org.terratec.altopia.presentation.ui.components.BaseScreen
 
 @Composable
-private fun MyContent(...) {
+private fun MyContent(/* ... */) {
     BaseScreen(
         managedDialogState = dialogState,
         showProgress = uiState.isLoading
@@ -146,7 +146,7 @@ private fun MyContent(...) {
 ### 3.2 Parámetros Disponibles
 
 ```kotlin
-BaseScreen(
+fun BaseScreen(
     modifier: Modifier = Modifier,
     showProgress: Boolean = false,              // Muestra loading overlay
     managedDialogState: ManagedDialogConfig? = null,  // Diálogo gestionado
@@ -172,28 +172,28 @@ BaseScreen(
 > [!NOTE]
 > **Los tamaños son de REFERENCIA. SIEMPRE usa `MaterialTheme.typography.{estilo}` en tu código.**
 
-| Estilo | Tamaño | Peso | Uso Recomendado | Ejemplo en App |
-|--------|--------|------|-----------------|----------------|
-| **Display** | | | |
-| `displayLarge` | 57sp | Regular | Números grandes, hero data | Saldo total destacado |
-| `displayMedium` | 45sp | Regular | Hero sections | "Bienvenido a {Nombre}" |
-| `displaySmall` | 36sp | Regular | Pantallas de onboarding | Título de introducción |
-| **Headline** | | | |
-| `headlineLarge` | 32sp | Regular | Sección principal | "Gastos del Mes" |
-| `headlineMedium` | 28sp | Regular | **Título de pantalla** | "Iniciar Sesión", "Mis Pagos" |
-| `headlineSmall` | 24sp | Regular | Títulos de tarjetas grandes | Nombre del condominio |
-| **Title** | | | |
-| `titleLarge` | 22sp | Medium | Títulos de diálogos | "Confirmar Pago" |
-| `titleMedium` | 16sp | Medium | Subtítulos prominentes | Nombre en lista |
-| `titleSmall` | 14sp | Medium | Subtítulos pequeños | Categoría de gasto |
-| **Body** | | | |
-| `bodyLarge` | 16sp | Regular | Texto principal extenso | Descripción de gasto |
-| `bodyMedium` | 14sp | Regular | **Texto estándar** | Contenido general |
-| `bodySmall` | 12sp | Regular | Texto secundario | Notas, disclaimers |
-| **Label** | | | |
-| `labelLarge` | 14sp | Medium | **Botones** | Texto en Button |
-| `labelMedium` | 12sp | Medium | Chips, badges | "Pagado", "Pendiente" |
-| `labelSmall` | 11sp | Medium | Timestamps, metadata | "Hace 2 horas" |
+| Estilo | Tamaño | Peso             | Uso Recomendado | Ejemplo en App |
+|--------|--------|------------------|-----------------|----------------|
+| **Display** | |                  | | |
+| `displayLarge` | 57sp | Regular          | Números grandes, hero data | Saldo total destacado |
+| `displayMedium` | 45sp | Regular          | Hero sections | "Bienvenido a {Nombre}" |
+| `displaySmall` | 36sp | Regular          | Pantallas de onboarding | Título de introducción |
+| **Headline** | |                  | | |
+| `headlineLarge` | 32sp | Regular          | Sección principal | "Gastos del Mes" |
+| `headlineMedium` | 28sp | Regular          | **Título de pantalla** | "Iniciar Sesión", "Mis Pagos" |
+| `headlineSmall` | 24sp | Regular          | Títulos de tarjetas grandes | Nombre del condominio |
+| **Title** | |                  | | |
+| `titleLarge` | 22sp | Medium           | Títulos de diálogos | "Confirmar Pago" |
+| `titleMedium` | 16sp | Medium           | Subtítulos prominentes | Nombre en lista |
+| `titleSmall` | 14sp | Medium           | Subtítulos pequeños | Categoría de gasto |
+| **Body** | |                  | | |
+| `bodyLarge` | 16sp | Regular          | Texto principal extenso | Descripción de gasto |
+| `bodyMedium` | 14sp | Regular          | **Texto estándar** | Contenido general |
+| `bodySmall` | 12sp | Regular          | Texto secundario | Notas, disclaimers |
+| **Label** | |                  | | |
+| `labelLarge` | 14sp | Medium           | **Botones** | Texto en Button |
+| `labelMedium` | 12sp | Medium Lima2027. | Chips, badges | "Pagado", "Pendiente" |
+| `labelSmall` | 11sp | Medium           | Timestamps, metadata | "Hace 2 horas" |
 
 ### 4.2 Guía de Selección
 
@@ -481,12 +481,12 @@ commonMain.dependencies {
 #### 6.6.2 Imports
 
 ```kotlin
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Icon
+// import androidx.compose.material.icons.Icons
+// import androidx.compose.material.icons.filled.Email
+// import androidx.compose.material.icons.filled.Lock
+// import androidx.compose.material.icons.filled.Visibility
+// import androidx.compose.material.icons.filled.VisibilityOff
+// import androidx.compose.material3.Icon
 ```
 
 #### 6.6.3 Categorías de Iconos
@@ -753,9 +753,9 @@ Column(
         .padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp)
 ) {
-    OutlinedTextField(/* ... */)
-    OutlinedTextField(/* ... */)
-    Button(/* ... */)
+    OutlinedTextField( value = "", onValueChange = {} )
+    OutlinedTextField( value = "", onValueChange = {} )
+    Button( onClick = {} )
 }
 ```
 
@@ -851,20 +851,20 @@ fun PaymentsScreenDarkPreview() {
 Pantalla de listado de pagos con todos los estándares aplicados:
 
 ```kotlin
-package org.terratec.altopia.presentation.features.payments
+// package org.terratec.altopia.presentation.features.payments
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
-import org.terratec.altopia.domain.model.Payment
-import org.terratec.altopia.presentation.model.ManagedDialogConfig
-import org.terratec.altopia.presentation.ui.components.BaseScreen
-import org.terratec.altopia.presentation.ui.theme.AppTheme
+// import androidx.compose.foundation.layout.*
+// import androidx.compose.foundation.lazy.LazyColumn
+// import androidx.compose.foundation.lazy.items
+// import androidx.compose.material3.*
+// import androidx.compose.runtime.*
+// import androidx.compose.ui.Modifier
+// import androidx.compose.ui.unit.dp
+// import org.koin.compose.viewmodel.koinViewModel
+// import org.terratec.altopia.domain.model.Payment
+// import org.terratec.altopia.presentation.model.ManagedDialogConfig
+// import org.terratec.altopia.presentation.ui.components.BaseScreen
+// import org.terratec.altopia.presentation.ui.theme.AppTheme
 
 // ===== PARTE 1: Screen (Stateful) =====
 @Composable

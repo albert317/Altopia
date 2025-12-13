@@ -8,7 +8,8 @@ import org.terratec.altopia.presentation.viewmodel.BaseViewModel
  * ViewModel for Reset Password screen following MVI pattern.
  */
 class ResetPasswordViewModel(
-    private val updatePasswordUseCase: UpdatePasswordUseCase
+    private val updatePasswordUseCase: UpdatePasswordUseCase,
+    private val logoutUseCase: org.terratec.altopia.domain.usecase.auth.LogoutUseCase
 ) : BaseViewModel<ResetPasswordUiState, ResetPasswordIntent, ResetPasswordEvent>() {
     
     override fun createInitialState(): ResetPasswordUiState = ResetPasswordUiState()
@@ -49,14 +50,17 @@ class ResetPasswordViewModel(
         
         updatePasswordUseCase(currentState.password)
             .onSuccess {
+                // Clear the temporary session
+                logoutUseCase()
+                
                 setUiState { copy(isLoading = false, isSuccess = true) }
                 showDialog(
                     DialogInfo(
                         title = "Contraseña actualizada",
-                        description = "Tu contraseña ha sido actualizada correctamente.",
-                        primaryButtonText = "Ir al inicio",
+                        description = "Tu contraseña ha sido actualizada correctamente. Por favor, inicia sesión nuevamente.",
+                        primaryButtonText = "Ir al Login",
                         onPrimaryButtonClick = {
-                            setEvent(ResetPasswordEvent.NavigateToHome)
+                            setEvent(ResetPasswordEvent.NavigateToLogin)
                         }
                     )
                 )
