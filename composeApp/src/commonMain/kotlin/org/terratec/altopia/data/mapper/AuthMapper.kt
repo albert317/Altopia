@@ -3,7 +3,6 @@ package org.terratec.altopia.data.mapper
 import org.terratec.altopia.data.remote.dto.auth.LoginResponse
 import org.terratec.altopia.data.remote.dto.auth.UserResponse
 import org.terratec.altopia.domain.model.AuthSession
-import org.terratec.altopia.domain.model.User
 
 /**
  * Mapper for converting auth DTOs to domain models.
@@ -16,22 +15,38 @@ class AuthMapper {
     fun loginResponseToAuthSession(response: LoginResponse): AuthSession {
         return AuthSession(
             accessToken = response.accessToken,
-            refreshToken = response.refreshToken,
+            tokenType = response.tokenType,
+            expiresIn = response.expiresIn,
             expiresAt = response.expiresAt,
-            user = userResponseToDomain(response.user)
+            refreshToken = response.refreshToken,
+            user = mapUser(response.user),
+            weakPassword = response.weakPassword
         )
     }
-    
-    /**
-     * Converts UserResponse to User domain model.
-     * Note: Supabase user ID is a UUID string, but domain User has Long id.
-     * For now, we use a hash of the UUID string as the Long id.
-     */
-    fun userResponseToDomain(response: UserResponse): User {
-        return User(
-            id = response.id.hashCode().toLong(),
-            name = response.userMetadata?.name ?: response.email.substringBefore('@'),
-            email = response.email
+
+    private fun mapUser(userResponse: UserResponse): org.terratec.altopia.domain.model.User {
+        return org.terratec.altopia.domain.model.User(
+            id = userResponse.id,
+            aud = userResponse.aud,
+            role = userResponse.role,
+            email = userResponse.email,
+            phone = userResponse.phone,
+            emailConfirmedAt = userResponse.emailConfirmedAt,
+            lastSignInAt = userResponse.lastSignInAt,
+            userMetadata = mapUserMetadata(userResponse.userMetadata),
+            createdAt = userResponse.createdAt,
+            updatedAt = userResponse.updatedAt,
+            isAnonymous = userResponse.isAnonymous
         )
+    }
+
+    private fun mapUserMetadata(metadata: org.terratec.altopia.data.remote.dto.auth.UserMetadata?): org.terratec.altopia.domain.model.UserMetadata? {
+        return metadata?.let {
+            org.terratec.altopia.domain.model.UserMetadata(
+                name = it.name,
+                avatarUrl = it.avatarUrl,
+                emailVerified = it.emailVerified
+            )
+        }
     }
 }

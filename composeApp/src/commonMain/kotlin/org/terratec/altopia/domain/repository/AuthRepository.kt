@@ -1,20 +1,20 @@
 package org.terratec.altopia.domain.repository
-
-import org.terratec.altopia.domain.model.User
-
+ 
+import org.terratec.altopia.domain.model.AuthSession
+ 
 /**
- * Repository interface for authentication operations.
- * Handles user login, logout, and session management.
- */
+  * Repository interface for authentication operations.
+  * Handles user login, logout, and session management.
+  */
 interface AuthRepository {
     /**
      * Authenticates a user with email and password.
      * 
      * @param email User's email address
      * @param password User's password
-     * @return Result containing the authenticated User on success, or an error on failure
+     * @return Result containing the authenticated AuthSession on success, or an error on failure
      */
-    suspend fun login(email: String, password: String): Result<User>
+    suspend fun login(email: String, password: String): Result<AuthSession>
     
     /**
      * Logs out the current user and clears the session.
@@ -24,11 +24,11 @@ interface AuthRepository {
     suspend fun logout(): Result<Unit>
     
     /**
-     * Gets the currently authenticated user from the local session.
+     * Gets the currently authenticated user session.
      * 
-     * @return The current User or null if not authenticated
+     * @return The current AuthSession or null if not authenticated
      */
-    suspend fun getCurrentUser(): User?
+    suspend fun getCurrentUser(): AuthSession?
     
     /**
      * Refreshes the current session by obtaining a new access token.

@@ -14,5 +14,6 @@ data class LoginResponse(
     @SerialName("expires_in") val expiresIn: Int,
     @SerialName("expires_at") val expiresAt: Long,
     @SerialName("refresh_token") val refreshToken: String,
-    @SerialName("user") val user: UserResponse
+    @SerialName("user") val user: UserResponse,
+    @SerialName("weak_password") val weakPassword: Boolean? = null // or String? JSON said null, usually boolean or object.
 )

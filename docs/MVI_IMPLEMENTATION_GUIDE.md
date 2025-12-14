@@ -31,6 +31,9 @@ graph LR
 - **Intent**: Acciones del usuario que modifican el estado
 - **UiState**: Estado inmutable de la UI
 - **Event**: Eventos únicos (navegación, toasts, etc.)
+- **Model (UseCase)**: Define la lógica de negocio y manipulación de datos
+
+En este esquema, el **Modelo** es definido y orquestado por los **UseCases**, que actúan como puerta de entrada a la capa de dominio y datos.
 
 ---
 
@@ -115,6 +118,18 @@ val event = _event.asSharedFlow()
 - **Emisión**: Mediante `setEvent(event)`
 - **Consumo**: Una sola vez en la View
 
+#### 3.4 Managed Dialog State
+
+```kotlin
+private val _managedDialogState = MutableStateFlow<ManagedDialogConfig?>(null)
+val managedDialogState: StateFlow<ManagedDialogConfig?> = _managedDialogState.asStateFlow()
+```
+
+- **Propósito**: Gestión centralizada de diálogos en la UI (errores, confirmaciones)
+- **Tipo**: `StateFlow` (nullable)
+- **Gestión**: Interna mediante `showDialog()` y `dismissDialog()`
+
+
 ### Métodos Protegidos
 
 #### setUiState
@@ -152,6 +167,24 @@ Define el estado inicial del ViewModel.
 protected abstract suspend fun handleIntent(intent: INTENT)
 ```
 Procesa las intenciones del usuario.
+
+#### showDialog
+```kotlin
+protected fun showDialog(userDialogConfig: DialogInfo)
+```
+Muestra un diálogo genérico gestionado por el BaseViewModel. Sincroniza automáticamente los eventos de cierre y clics de botones.
+
+**Ejemplo:**
+```kotlin
+showDialog(
+    DialogInfo(
+        title = "Error",
+        description = "No se pudo cargar la información",
+        primaryButtonText = "Reintentar",
+        onPrimaryButtonClick = { setIntent(MyIntent.Retry) }
+    )
+)
+```
 
 ---
 
@@ -201,6 +234,9 @@ Cada componente sigue una convención de nombres clara:
 | UiState | `{Feature}UiState.kt` | `LoginUiState.kt` |
 | Intent | `{Feature}Intent.kt` | `LoginIntent.kt` |
 | Event | `{Feature}Event.kt` | `LoginEvent.kt` |
+
+> [!IMPORTANT]
+> **Archivos Separados**: Cada componente (`UiState`, `Intent`, `Event`) DEBE definirse en su propio archivo. Evita agruparlos en un solo archivo "Contract" o "Wrapper". Esto mejora la legibilidad y el control de versiones.
 
 ---
 
@@ -793,11 +829,27 @@ private fun LoginContent(
 - Acceso directo a la View
 - Mutar estado fuera de `setUiState`
 
+### 8.4 ViewModel
+
+✅ **DO:**
+- Toda la lógica en `handleIntent`
+- Usar `setUiState { copy(...) }`
+- **Llamar UseCases para consumos de API y lógica de negocio**
+- Manejo de errores consistente usando `runCatching` o `Result` del UseCase
+- Usar `viewModelScope` para corrutinas
+
+❌ **DON'T:**
+- Lógica de negocio en el ViewModel
+- Llamar al Repository directamente (saltarse el UseCase)
+- Acceso directo a la View
+- Mutar estado fuera de `setUiState`
+
 ### 8.5 Screen
 
 ✅ **DO:**
 - Observar `uiState` con `collectAsState`
 - Colectar `event` con `LaunchedEffect`
+- Observar `managedDialogState` para mostrar diálogos de error/confirmación
 - Enviar intents para acciones del usuario
 - Composables sin estado (stateless)
 
@@ -842,3 +894,96 @@ Al crear una nueva feature, asegúrate de:
 
 **Fecha de última actualización**: 2025-11-23  
 **Versión**: 1.0
+
+---
+
+## 9. Extensiones y Utilidades
+
+### 9.1 executeTask Extension
+
+Para simplificar la ejecución de UseCases y manejar los estados de carga y errores de manera consistente, utilizamos la extensión `executeTask` en el ViewModel.
+
+#### Definición
+
+```kotlin
+// presentation/util/ViewModelExtensions.kt
+
+fun <T> ViewModel.executeTask(
+    onSuccess: (T) -> Unit,
+    onFailure: (BusinessError) -> Unit,
+    task: suspend () -> T,
+) {
+    viewModelScope.launch {
+        try {
+            val result = task.invoke()
+            withContext(Dispatchers.Main) {
+                onSuccess.invoke(result)
+            }
+        } catch (e: Throwable) {
+            when(e){
+                is BusinessError -> {
+                    withContext(Dispatchers.Main) {
+                        onFailure.invoke(e)
+                    }
+                }
+                else -> {
+                    withContext(Dispatchers.Main) {
+                        onFailure.invoke(
+                            BusinessError(
+                                message = e.message ?: "Unknown error",
+                                success = false,
+                                codeMessage = "UNKNOWN_ERROR",
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+#### Uso Recomendado
+
+Aprovechando la sintaxis de trailing lambda de Kotlin, podemos usar `executeTask` de manera limpia y legible:
+
+```kotlin
+private fun performLogin(email: String, password: String) {
+    // 1. Mostrar estado de carga
+    setUiState { copy(isLoading = true, errorMessage = null) }
+
+    // 2. Ejecutar tarea
+    executeTask(
+        onSuccess = { session ->
+            setUiState { copy(isLoading = false) }
+            setEvent(LoginEvent.NavigateToHome(session))
+        },
+        onFailure = { error ->
+            setUiState {
+                copy(
+                    isLoading = false,
+                    errorMessage = error.message
+                )
+            }
+            showLoginErrorDialog(error.message)
+        }
+    ) {
+        // 3. Lambda de la tarea (suspend function)
+        loginUseCase(email, password).getOrThrow()
+    }
+}
+```
+
+### 9.2 BusinessError
+
+Clase de dominio para estandarizar errores de negocio.
+
+```kotlin
+// domain/model/BusinessError.kt
+
+data class BusinessError(
+    override val message: String,
+    val success: Boolean = false,
+    val codeMessage: String
+) : Throwable(message)
+```

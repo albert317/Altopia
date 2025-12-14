@@ -29,18 +29,6 @@ fun UserScreen(
 
         uiState.error?.let { error ->
             Text("Error: $error", color = androidx.compose.ui.graphics.Color.Red)
-            Button(onClick = { viewModel.loadUser(1) }) {
-                Text("Retry User Load")
-            }
-        }
-
-        uiState.user?.let { user ->
-            Text("User: ${user.name}")
-            Text("Email: ${user.email}")
-        }
-
-        Button(onClick = { viewModel.loadUser(1) }, modifier = Modifier.padding(vertical = 8.dp)) {
-            Text("Load User 1")
         }
 
         androidx.compose.foundation.lazy.LazyColumn {

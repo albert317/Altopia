@@ -3,26 +3,25 @@ package org.terratec.altopia.presentation.features.profile_selection
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Apartment
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
@@ -44,128 +44,118 @@ fun ProfileSelectionScreen(
     viewModel: ProfileSelectionViewModel = koinInject()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val managedDialogState by viewModel.managedDialogState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->
             when (event) {
-                ProfileSelectionContract.Event.NavigateToOwnerHome -> onNavigateToOwnerHome()
-                ProfileSelectionContract.Event.NavigateToAdminDashboard -> onNavigateToAdminDashboard()
+                ProfileSelectionEvent.NavigateToAdminDashboard -> onNavigateToAdminDashboard()
+                ProfileSelectionEvent.NavigateToOwnerHome -> onNavigateToOwnerHome()
             }
         }
     }
 
-    ProfileSelectionContent(
-        uiState = uiState,
-        onIntent = viewModel::setIntent
-    )
+    BaseScreen(
+        showProgress = uiState.isLoading,
+        managedDialogState = managedDialogState,
+        onDialogDismiss = viewModel::dismissDialog
+    ) {
+        ProfileSelectionContent(
+            uiState = uiState,
+            onIntent = viewModel::setIntent
+        )
+    }
 }
 
 @Composable
 private fun ProfileSelectionContent(
-    uiState: ProfileSelectionContract.UiState,
-    onIntent: (ProfileSelectionContract.Intent) -> Unit
+    uiState: ProfileSelectionUiState,
+    onIntent: (ProfileSelectionIntent) -> Unit
 ) {
-    BaseScreen(
-        showProgress = uiState.isLoading
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Text(
+            text = "Selecciona tu perfil",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Hola, ${uiState.userName}",
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.weight(1f, fill = false)
         ) {
-            Spacer(modifier = Modifier.height(48.dp))
-            
-            Text(
-                "Selecciona un Perfil",
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                "Continua como ${uiState.userName}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(uiState.availableOptions) { option ->
-                    ProfileOptionCard(
-                        option = option,
-                        isSelected = uiState.selectedOption?.id == option.id,
-                        onClick = { onIntent(ProfileSelectionContract.Intent.SelectOption(option)) }
-                    )
-                }
+            items(uiState.availableOptions) { option ->
+                ProfileOptionCard(
+                    option = option,
+                    isSelected = uiState.selectedOption == option,
+                    onSelect = { onIntent(ProfileSelectionIntent.SelectOption(option)) }
+                )
             }
+        }
 
-            Button(
-                onClick = { onIntent(ProfileSelectionContract.Intent.ConfirmSelection) },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                enabled = uiState.selectedOption != null
-            ) {
-                Text("Continuar")
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = { onIntent(ProfileSelectionIntent.ConfirmSelection) },
+            enabled = uiState.selectedOption != null,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Continuar")
         }
     }
 }
 
 @Composable
 private fun ProfileOptionCard(
-    option: ProfileSelectionContract.ProfileOption,
+    option: ProfileOption,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onSelect: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable { onSelect() },
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
-                MaterialTheme.colorScheme.surface
-        ),
-        border = if (isSelected) 
-            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 
-        else null
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = if (option.type == RoleType.ADMIN) Icons.Default.AdminPanelSettings else Icons.Default.Apartment,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = option.title,
-                    style = MaterialTheme.typography.titleMedium
+        ListItem(
+            headlineContent = { Text(option.title) },
+            supportingContent = { option.subtitle?.let { Text(it) } },
+            leadingContent = {
+                Icon(
+                    imageVector = when (option.type) {
+                        RoleType.ADMIN -> Icons.Default.Security
+                        RoleType.PROPIETARIO -> Icons.Default.Apartment
+                        else -> Icons.Default.Person
+                    },
+                    contentDescription = null
                 )
-                Text(
-                    text = option.subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            trailingContent = {
+                RadioButton(
+                    selected = isSelected,
+                    onClick = null // Handled by Card click
                 )
-            }
-            
-            Icon(
-                imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                contentDescription = if (isSelected) "Seleccionado" else "No seleccionado",
-                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+            },
+            colors = ListItemDefaults.colors(
+                containerColor = Color.Transparent
             )
-        }
+        )
     }
 }
 
@@ -174,14 +164,19 @@ private fun ProfileOptionCard(
 fun ProfileSelectionPreview() {
     AppTheme {
         ProfileSelectionContent(
-            uiState = ProfileSelectionContract.UiState(
+            uiState = ProfileSelectionUiState(
                 userName = "Albert Montes",
                 availableOptions = listOf(
-                    ProfileSelectionContract.ProfileOption("1", RoleType.ADMIN, "Administrador", "Acceso Global"),
-                    ProfileSelectionContract.ProfileOption("2", RoleType.PROPIETARIO, "A-302", "Condominio Las Palmeras"),
-                    ProfileSelectionContract.ProfileOption("3", RoleType.PROPIETARIO, "B-101", "Condominio Los Pinos")
+                    ProfileOption("1", RoleType.ADMIN, "Administrador", "Acceso Global"),
+                    ProfileOption("2", RoleType.PROPIETARIO, "A-302", "Condominio Las Palmeras"),
+                    ProfileOption("3", RoleType.PROPIETARIO, "B-101", "Condominio Los Pinos")
                 ),
-                selectedOption = ProfileSelectionContract.ProfileOption("1", RoleType.ADMIN, "Administrador", "Acceso Global")
+                selectedOption = ProfileOption(
+                    "1",
+                    RoleType.ADMIN,
+                    "Administrador",
+                    "Acceso Global"
+                )
             ),
             onIntent = {}
         )

@@ -44,7 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
-import org.terratec.altopia.domain.model.User
+import org.terratec.altopia.domain.model.AuthSession
 import org.terratec.altopia.presentation.model.ManagedDialogConfig
 import org.terratec.altopia.presentation.ui.components.BaseScreen
 import org.terratec.altopia.presentation.ui.theme.AppTheme
@@ -55,7 +55,7 @@ import org.terratec.altopia.presentation.ui.theme.AppTheme
  */
 @Composable
 fun LoginScreen(
-    onNavigateToHome: (User) -> Unit,
+    onNavigateToHome: (AuthSession) -> Unit,
     onNavigateToForgotPassword: () -> Unit = {},
     viewModel: LoginViewModel = koinViewModel()
 ) {
@@ -66,7 +66,7 @@ fun LoginScreen(
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->
             when (event) {
-                is LoginEvent.NavigateToHome -> onNavigateToHome(event.user)
+                is LoginEvent.NavigateToHome -> onNavigateToHome(event.session)
                 LoginEvent.NavigateToForgotPassword -> onNavigateToForgotPassword()
                 is LoginEvent.ShowToast -> {
                     // TODO: Implement toast system if needed

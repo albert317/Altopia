@@ -3,7 +3,7 @@ package org.terratec.altopia.data.repository
 import org.terratec.altopia.data.local.session.SessionManager
 import org.terratec.altopia.data.mapper.AuthMapper
 import org.terratec.altopia.data.remote.datasource.AuthDataSource
-import org.terratec.altopia.domain.model.User
+import org.terratec.altopia.domain.model.AuthSession
 import org.terratec.altopia.domain.repository.AuthRepository
 
 /**
@@ -16,12 +16,12 @@ class AuthRepositoryImpl(
     private val mapper: AuthMapper
 ) : AuthRepository {
     
-    override suspend fun login(email: String, password: String): Result<User> {
+    override suspend fun login(email: String, password: String): Result<AuthSession> {
         return try {
             val response = authDataSource.login(email, password)
             val session = mapper.loginResponseToAuthSession(response)
             sessionManager.saveSession(session)
-            Result.success(session.user)
+            Result.success(session)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -41,8 +41,8 @@ class AuthRepositoryImpl(
         }
     }
     
-    override suspend fun getCurrentUser(): User? {
-        return sessionManager.getSession()?.user
+    override suspend fun getCurrentUser(): AuthSession? {
+        return sessionManager.getSession()
     }
     
     override suspend fun refreshSession(): Result<Unit> {

@@ -53,68 +53,71 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinInject()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val managedDialogState by viewModel.managedDialogState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->
             when (event) {
-                HomeContract.Event.NavigateToPayments -> onNavigateToPayments()
-                is HomeContract.Event.NavigateToExpenseDetail -> { /* TODO */ }
-                is HomeContract.Event.ShowSnack -> { /* TODO: Show snackbar */ }
+                HomeEvent.NavigateToPayments -> onNavigateToPayments()
+                is HomeEvent.NavigateToExpenseDetail -> { /* TODO */ }
+                is HomeEvent.ShowSnack -> { /* TODO: Show snackbar */ }
             }
         }
     }
 
-    HomeContent(
-        uiState = uiState,
-        onIntent = viewModel::setIntent
-    )
+    BaseScreen(
+        showProgress = uiState.isLoading,
+        managedDialogState = managedDialogState, // Pass managed dialog state
+        onDialogDismiss = viewModel::dismissDialog
+    ) {
+        HomeContent(
+            uiState = uiState,
+            onIntent = viewModel::setIntent
+        )
+    }
 }
 
 @Composable
 private fun HomeContent(
-    uiState: HomeContract.UiState,
-    onIntent: (HomeContract.Intent) -> Unit
+    uiState: HomeUiState,
+    onIntent: (HomeIntent) -> Unit
 ) {
-    BaseScreen(
-        showProgress = uiState.isLoading
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            // Header
-            item {
-                HomeHeader(
-                    userName = uiState.userName,
-                    unitCode = uiState.unitCode
-                )
-            }
+        // Header
+        item {
+            HomeHeader(
+                userName = uiState.userName,
+                unitCode = uiState.unitCode
+            )
+        }
 
-            // Debt Section (Hero)
-            item {
-                DebtStatusCard(
-                    totalDebt = uiState.totalDebt,
-                    isOverdue = uiState.isDebtOverdue,
-                    onPayClick = { onIntent(HomeContract.Intent.PayReceipt) }
-                )
-            }
+        // Debt Section (Hero)
+        item {
+            DebtStatusCard(
+                totalDebt = uiState.totalDebt,
+                isOverdue = uiState.isDebtOverdue,
+                onPayClick = { onIntent(HomeIntent.PayReceipt) }
+            )
+        }
 
-            // Last Receipt
-            uiState.lastReceipt?.let { receipt ->
-                item {
-                    LastReceiptCard(receipt = receipt)
-                }
-            }
-
-            // Building Expenses
+        // Last Receipt
+        uiState.lastReceipt?.let { receipt ->
             item {
-                BuildingExpensesSection(
-                    expenses = uiState.buildingExpenses,
-                    onViewDetails = { id -> onIntent(HomeContract.Intent.ViewExpenseDetails(id)) }
-                )
+                LastReceiptCard(receipt = receipt)
             }
+        }
+
+        // Building Expenses
+        item {
+            BuildingExpensesSection(
+                expenses = uiState.buildingExpenses,
+                onViewDetails = { id -> onIntent(HomeIntent.ViewExpenseDetails(id)) }
+            )
         }
     }
 }
@@ -212,7 +215,7 @@ private fun DebtStatusCard(
 }
 
 @Composable
-private fun LastReceiptCard(receipt: HomeContract.ReceiptSummary) {
+private fun LastReceiptCard(receipt: ReceiptSummary) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -274,7 +277,7 @@ private fun ReceiptRow(label: String, amount: Double, isBold: Boolean = false) {
 
 @Composable
 private fun BuildingExpensesSection(
-    expenses: List<HomeContract.ExpenseCategory>,
+    expenses: List<ExpenseCategory>,
     onViewDetails: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -333,12 +336,12 @@ private fun BuildingExpensesSection(
 fun HomeScreenPreview() {
     AppTheme {
         HomeContent(
-            uiState = HomeContract.UiState(
+            uiState = HomeUiState(
                 userName = "Albert Montes",
                 unitCode = "A-302",
                 totalDebt = 180.0,
                 isDebtOverdue = false,
-                lastReceipt = HomeContract.ReceiptSummary(
+                lastReceipt = ReceiptSummary(
                     id = "REC-123",
                     periodName = "Noviembre 2025",
                     dueDate = "15/12/2025",
@@ -348,9 +351,9 @@ fun HomeScreenPreview() {
                     totalAmount = 180.0
                 ),
                 buildingExpenses = listOf(
-                    HomeContract.ExpenseCategory("1", "Seguridad", 3500.0),
-                    HomeContract.ExpenseCategory("2", "Jardinería", 1200.0),
-                    HomeContract.ExpenseCategory("3", "Luz Común", 850.50)
+                    ExpenseCategory("1", "Seguridad", 3500.0),
+                    ExpenseCategory("2", "Jardinería", 1200.0),
+                    ExpenseCategory("3", "Luz Común", 850.50)
                 )
             ),
             onIntent = {}
@@ -363,12 +366,12 @@ fun HomeScreenPreview() {
 fun HomeScreenOverduePreview() {
     AppTheme {
         HomeContent(
-            uiState = HomeContract.UiState(
+            uiState = HomeUiState(
                 userName = "Albert Montes",
                 unitCode = "A-302",
                 totalDebt = 350.0,
                 isDebtOverdue = true,
-                lastReceipt = HomeContract.ReceiptSummary(
+                lastReceipt = ReceiptSummary(
                     id = "REC-122",
                     periodName = "Octubre 2025",
                     dueDate = "15/11/2025",

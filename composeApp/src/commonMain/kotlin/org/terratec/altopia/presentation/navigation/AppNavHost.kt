@@ -13,7 +13,7 @@ import org.terratec.altopia.presentation.features.home.HomeScreen
 import org.terratec.altopia.presentation.features.profile_selection.ProfileSelectionScreen
 import org.terratec.altopia.presentation.ui.SplashScreen
 import org.terratec.altopia.domain.model.RoleType
-import org.terratec.altopia.domain.model.User
+import org.terratec.altopia.domain.model.AuthSession
 
 /**
  * Main navigation host for the app.
@@ -44,8 +44,8 @@ fun AppNavHost(
     ) {
         composable<Route.Splash> {
             SplashScreen(
-                onNavigateToHome = { user ->
-                    val destination = determineStartDestination(user)
+                onNavigateToHome = { session ->
+                    val destination = determineStartDestination(session)
                     navController.navigate(destination) {
                         popUpTo(Route.Splash) { inclusive = true }
                     }
@@ -60,8 +60,8 @@ fun AppNavHost(
         
         composable<Route.Login> {
             LoginScreen(
-                onNavigateToHome = { user ->
-                    val destination = determineStartDestination(user)
+                onNavigateToHome = { session ->
+                    val destination = determineStartDestination(session)
                     navController.navigate(destination) {
                         popUpTo(Route.Login) { inclusive = true }
                     }
@@ -107,7 +107,7 @@ fun AppNavHost(
             ProfileSelectionScreen(
                 onNavigateToOwnerHome = {
                     navController.navigate(Route.Home) {
-                        popUpTo(Route.ProfileSelection) { inclusive = true }
+                        popUpTo(Route.ProfileSelection)
                     }
                 },
                 onNavigateToAdminDashboard = {
@@ -122,10 +122,10 @@ fun AppNavHost(
 /**
  * Determines the next screen based on user roles and properties.
  */
-private fun determineStartDestination(user: User): Route {
-    val isAdmin = user.roles.any { it.name == RoleType.ADMIN }
-    val isOwner = user.roles.any { it.name == RoleType.PROPIETARIO }
-    val propertiesCount = user.properties.size
+private fun determineStartDestination(session: AuthSession): Route {
+    val isAdmin = session.user.appRoles.any { it.name == RoleType.ADMIN }
+    val isOwner = session.user.appRoles.any { it.name == RoleType.PROPIETARIO }
+    val propertiesCount = session.user.properties.size
     
     return when {
          // Case A: Admin only -> Admin Dashboard (Pending, redirect to ProfileSelection for now if mixed, or Home if not implemented)

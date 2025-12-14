@@ -2,6 +2,7 @@ package org.terratec.altopia.presentation.features.login
 
 import org.terratec.altopia.domain.usecase.auth.LoginUseCase
 import org.terratec.altopia.presentation.model.DialogInfo
+import org.terratec.altopia.presentation.util.executeTask
 import org.terratec.altopia.presentation.viewmodel.BaseViewModel
 
 /**
@@ -44,7 +45,7 @@ class LoginViewModel(
         }
     }
 
-    private suspend fun handleSubmitCredentials() {
+    private fun handleSubmitCredentials() {
         val currentState = uiState.value
         
         // Validación de credenciales
@@ -52,24 +53,29 @@ class LoginViewModel(
             return
         }
 
-        // Mostrar estado de carga
+        performLogin(currentState.email, currentState.password)
+    }
+
+    private fun performLogin(email: String, password: String) {
         setUiState { copy(isLoading = true, errorMessage = null) }
 
-        // Ejecutar use case de login
-        loginUseCase(currentState.email, currentState.password)
-            .onSuccess { user ->
+        executeTask(
+            onSuccess = { session ->
                 setUiState { copy(isLoading = false) }
-                setEvent(LoginEvent.NavigateToHome(user))
-            }
-            .onFailure { error ->
+                setEvent(LoginEvent.NavigateToHome(session))
+            },
+            onFailure = { error ->
                 setUiState {
                     copy(
                         isLoading = false,
-                        errorMessage = error.message ?: "Error desconocido"
+                        errorMessage = error.message
                     )
                 }
-                showLoginErrorDialog(error.message ?: "Error desconocido")
+                showLoginErrorDialog(error.message)
             }
+        ){
+            loginUseCase(email, password).getOrThrow()
+        }
     }
 
     private fun validateCredentials(state: LoginUiState): Boolean {

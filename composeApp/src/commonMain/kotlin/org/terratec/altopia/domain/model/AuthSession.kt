@@ -1,5 +1,9 @@
 package org.terratec.altopia.domain.model
 
+import kotlinx.serialization.Serializable
+import org.terratec.altopia.domain.model.Role
+import org.terratec.altopia.domain.model.Property
+
 /**
  * Represents an authenticated user session.
  * 
@@ -8,9 +12,13 @@ package org.terratec.altopia.domain.model
  * @property expiresAt Unix timestamp (in seconds) when the access token expires
  * @property user The authenticated user's information
  */
+@Serializable
 data class AuthSession(
     val accessToken: String,
-    val refreshToken: String,
+    val tokenType: String,
+    val expiresIn: Int,
     val expiresAt: Long,
-    val user: User
+    val refreshToken: String,
+    val user: User,
+    val weakPassword: Boolean? = null
 )

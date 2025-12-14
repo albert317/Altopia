@@ -11,7 +11,6 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.terratec.altopia.data.local.session.SessionManager
 import org.terratec.altopia.domain.model.AuthSession
-import org.terratec.altopia.domain.model.User
 import org.terratec.altopia.presentation.navigation.DeepLinkHandler
 import org.terratec.altopia.presentation.navigation.Route
 

@@ -13,7 +13,7 @@ import org.terratec.altopia.data.remote.datasource.AuthDataSource
 import org.terratec.altopia.data.remote.datasource.AuthDataSourceImpl
 import org.terratec.altopia.data.repository.AuthRepositoryImpl
 import org.terratec.altopia.domain.repository.AuthRepository
-import org.terratec.altopia.domain.usecase.auth.GetCurrentUserUseCase
+import org.terratec.altopia.domain.usecase.auth.GetAuthSessionLocalUseCase
 import org.terratec.altopia.domain.usecase.auth.IsAuthenticatedUseCase
 import org.terratec.altopia.domain.usecase.auth.LoginUseCase
 import org.terratec.altopia.domain.usecase.auth.LogoutUseCase
@@ -61,7 +61,7 @@ val authModule = module {
     // Use Cases
     factory { LoginUseCase(get()) }
     factory { LogoutUseCase(get()) }
-    factory { GetCurrentUserUseCase(get()) }
+    factory { GetAuthSessionLocalUseCase(get()) }
     factory { IsAuthenticatedUseCase(get()) }
     factory { org.terratec.altopia.domain.usecase.ForgotPasswordUseCase(get()) }
     factory { org.terratec.altopia.domain.usecase.UpdatePasswordUseCase(get()) }

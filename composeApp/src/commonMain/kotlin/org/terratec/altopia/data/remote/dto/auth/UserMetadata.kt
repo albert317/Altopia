@@ -10,5 +10,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserMetadata(
     @SerialName("name") val name: String? = null,
-    @SerialName("avatar_url") val avatarUrl: String? = null
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("email_verified") val emailVerified: Boolean? = null
 )

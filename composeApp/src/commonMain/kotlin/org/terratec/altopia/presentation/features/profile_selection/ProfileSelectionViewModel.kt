@@ -1,95 +1,130 @@
 package org.terratec.altopia.presentation.features.profile_selection
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.terratec.altopia.domain.model.RoleType
-import org.terratec.altopia.domain.usecase.auth.GetCurrentUserUseCase
+import org.terratec.altopia.domain.usecase.auth.GetAuthSessionLocalUseCase
+import org.terratec.altopia.domain.usecase.user.GetPersonUseCase
+import org.terratec.altopia.domain.usecase.user.GetUserProfilesUseCase
+import org.terratec.altopia.domain.usecase.user.GetUserUseCase
+import org.terratec.altopia.presentation.viewmodel.BaseViewModel
 
 class ProfileSelectionViewModel(
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
-) : ViewModel() {
+    private val getAuthSessionLocalUseCase: GetAuthSessionLocalUseCase,
+    private val getPersonUseCase: GetPersonUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val getUserProfilesUseCase: GetUserProfilesUseCase
+) : BaseViewModel<ProfileSelectionUiState, ProfileSelectionIntent, ProfileSelectionEvent>() {
 
-    private val _uiState = MutableStateFlow(ProfileSelectionContract.UiState())
-    val uiState = _uiState.asStateFlow()
-
-    private val _event = Channel<ProfileSelectionContract.Event>()
-    val event = _event.receiveAsFlow()
+    override fun createInitialState(): ProfileSelectionUiState = ProfileSelectionUiState()
 
     init {
         loadProfileOptions()
     }
 
-    fun setIntent(intent: ProfileSelectionContract.Intent) {
+    override suspend fun handleIntent(intent: ProfileSelectionIntent) {
         when (intent) {
-            is ProfileSelectionContract.Intent.SelectOption -> {
-                _uiState.value = _uiState.value.copy(selectedOption = intent.option)
+            is ProfileSelectionIntent.SelectOption -> {
+                setUiState { copy(selectedOption = intent.option) }
             }
-            ProfileSelectionContract.Intent.ConfirmSelection -> handleConfirmation()
+
+            ProfileSelectionIntent.ConfirmSelection -> handleConfirmation()
         }
     }
 
     private fun loadProfileOptions() {
+        setUiState { copy(isLoading = true) }
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            getCurrentUserUseCase()
-                .onSuccess { user ->
-                    user?.let {
-                        val options = mutableListOf<ProfileSelectionContract.ProfileOption>()
+            try {
+                // 1. Get Current User Session (Auth)
+                val userResult = getAuthSessionLocalUseCase()
+                val session = userResult.getOrNull()
 
-                        // Add Admin Option
-                        if (it.roles.any { role -> role.name == RoleType.ADMIN }) {
-                            options.add(
-                                ProfileSelectionContract.ProfileOption(
-                                    id = "ADMIN_DASHBOARD",
-                                    type = RoleType.ADMIN,
-                                    title = "Administrador",
-                                    subtitle = "Gestión global del sistema"
-                                )
-                            )
+                // Access ID safely
+                val userId = session?.user?.id
+
+                if (userId != null) {
+                    // 2. Get Person details using Auth ID
+                    val person = getPersonUseCase(userId).getOrNull()
+                        ?: throw Exception("Person not found for authId: $userId")
+
+                    // 3. Get Business User using Person ID
+                    val businessUser = getUserUseCase(person.id).getOrNull()
+                        ?: throw Exception("Business User not found for personId: ${person.id}")
+
+                    println("USER: $businessUser")
+
+                    // 4. Fetch User Profiles using Business User ID
+                    val profilesResult = getUserProfilesUseCase(businessUser.id)
+
+                    profilesResult.onSuccess { profiles ->
+                        val options = profiles.mapNotNull { profile ->
+                            when (profile.profileType) {
+                                "ADMINISTRADOR", "ADMIN" -> {
+                                    ProfileOption(
+                                        id = "ADMIN_DASHBOARD",
+                                        type = RoleType.ADMIN,
+                                        title = "Administrador",
+                                        subtitle = "Gestión global del sistema"
+                                    )
+                                }
+
+                                "PROPIETARIO", "INQUILINO", "FAMILIAR" -> {
+                                    val unitInfo = profile.unitCode ?: "Sin Unidad"
+                                    val blockInfo = profile.blockName ?: "Sin Bloque"
+
+                                    val type = when (profile.profileType) {
+                                        "INQUILINO" -> RoleType.INQUILINO
+                                        else -> RoleType.PROPIETARIO
+                                    }
+
+                                    ProfileOption(
+                                        id = profile.unitId ?: "UNKNOWN_${profile.hashCode()}",
+                                        type = type,
+                                        propertyId = profile.unitId,
+                                        title = "Unidad $unitInfo",
+                                        subtitle = "Bloque $blockInfo - ${profile.profileType}"
+                                    )
+                                }
+
+                                else -> null
+                            }
                         }
 
-                        // Add Property Options
-                        it.properties.forEach { props ->
-                            options.add(
-                                ProfileSelectionContract.ProfileOption(
-                                    id = props.id,
-                                    type = RoleType.PROPIETARIO,
-                                    propertyId = props.id,
-                                    title = props.unitCode,
-                                    subtitle = props.condoName
-                                )
+                        setUiState {
+                            copy(
+                                isLoading = false,
+                                userName = "${person.nombre} ${person.apellidos}",
+                                availableOptions = options,
+                                selectedOption = options.firstOrNull()
                             )
                         }
-
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            userName = it.name,
-                            availableOptions = options,
-                            selectedOption = options.firstOrNull() // Default select first
-                        )
+                    }.onFailure { error ->
+                        setUiState {
+                            copy(
+                                isLoading = false,
+                                error = error.message
+                            )
+                        }
                     }
+                } else {
+                    setUiState { copy(isLoading = false, error = "No active session") }
                 }
-                .onFailure {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                    // In real app, handle error
-                }
+            } catch (e: Exception) {
+                setUiState { copy(isLoading = false, error = e.message) }
+                println("Error loading profile options: ${e.message}")
+            }
         }
     }
 
     private fun handleConfirmation() {
         viewModelScope.launch {
-            val selected = _uiState.value.selectedOption
+            val selected = uiState.value.selectedOption
             if (selected != null) {
                 if (selected.type == RoleType.ADMIN) {
-                    _event.send(ProfileSelectionContract.Event.NavigateToAdminDashboard)
+                    setEvent(ProfileSelectionEvent.NavigateToAdminDashboard)
                 } else {
-                    // Logic to set "current property" context could go here
-                    _event.send(ProfileSelectionContract.Event.NavigateToOwnerHome)
+                    setEvent(ProfileSelectionEvent.NavigateToOwnerHome)
                 }
             }
         }

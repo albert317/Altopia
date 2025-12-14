@@ -1,5 +1,6 @@
 package org.terratec.altopia.presentation.navigation
 
+import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -10,7 +11,7 @@ import kotlinx.coroutines.flow.asSharedFlow
  */
 class DeepLinkHandler(
     private val sessionManager: org.terratec.altopia.data.local.session.SessionManager
-) {
+) : ViewModel() {
     private val _deepLinkEvent = MutableSharedFlow<Route>(replay = 1)
     val deepLinkEvent: SharedFlow<Route> = _deepLinkEvent.asSharedFlow()
 
@@ -47,11 +48,17 @@ class DeepLinkHandler(
                         val session = org.terratec.altopia.domain.model.AuthSession(
                             accessToken = accessToken,
                             refreshToken = refreshToken,
+                            tokenType = "bearer",
+                            expiresIn = expiresIn.toInt(),
                             expiresAt = expiresAt,
                             user = org.terratec.altopia.domain.model.User(
-                                id = 0,
-                                name = "Reset User",
-                                email = "" 
+                                id = "0",
+                                aud = "authenticated",
+                                role = "authenticated",
+                                email = "",
+                                createdAt = "",
+                                updatedAt = "",
+                                userMetadata = org.terratec.altopia.domain.model.UserMetadata(name = "Reset User")
                             )
                         )
                         

@@ -1,6 +1,6 @@
 package org.terratec.altopia.presentation.features.login
 
-import org.terratec.altopia.domain.model.User
+import org.terratec.altopia.domain.model.AuthSession
 
 /**
  * One-time events for Login screen.
@@ -10,7 +10,7 @@ sealed interface LoginEvent {
     /**
      * Navigate to home screen after successful login.
      */
-    data class NavigateToHome(val user: User) : LoginEvent
+    data class NavigateToHome(val session: AuthSession) : LoginEvent
     
     /**
      * Navigate to forgot password screen.

@@ -12,7 +12,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.terratec.altopia.data.local.util.getCurrentTimeMillis
 import org.terratec.altopia.domain.model.AuthSession
-import org.terratec.altopia.domain.model.User
 
 /**
  * Implementation of SessionManager using DataStore for persistent storage.
@@ -28,27 +27,16 @@ class SessionManagerImpl(
     
     override suspend fun saveSession(session: AuthSession) {
         dataStore.edit { preferences ->
-            preferences[ACCESS_TOKEN_KEY] = session.accessToken
-            preferences[REFRESH_TOKEN_KEY] = session.refreshToken
-            preferences[EXPIRES_AT_KEY] = session.expiresAt
-            preferences[USER_JSON_KEY] = json.encodeToString(session.user)
+            preferences[SESSION_DATA_KEY] = json.encodeToString(session)
         }
     }
     
     override suspend fun getSession(): AuthSession? {
         val preferences = dataStore.data.first()
-        val accessToken = preferences[ACCESS_TOKEN_KEY] ?: return null
-        val refreshToken = preferences[REFRESH_TOKEN_KEY] ?: return null
-        val expiresAt = preferences[EXPIRES_AT_KEY] ?: return null
-        val userJson = preferences[USER_JSON_KEY] ?: return null
+        val sessionJson = preferences[SESSION_DATA_KEY] ?: return null
         
         return try {
-            AuthSession(
-                accessToken = accessToken,
-                refreshToken = refreshToken,
-                expiresAt = expiresAt,
-                user = json.decodeFromString<User>(userJson)
-            )
+            json.decodeFromString<AuthSession>(sessionJson)
         } catch (e: Exception) {
             null
         }
@@ -56,31 +44,29 @@ class SessionManagerImpl(
     
     override suspend fun clearSession() {
         dataStore.edit { preferences ->
-            preferences.clear()
+            preferences.remove(SESSION_DATA_KEY)
         }
     }
     
+    // With JSON storage, we need to read the entire object, modify it, and write it back.
     override suspend fun updateAccessToken(accessToken: String, expiresAt: Long) {
-        dataStore.edit { preferences ->
-            preferences[ACCESS_TOKEN_KEY] = accessToken
-            preferences[EXPIRES_AT_KEY] = expiresAt
-        }
+        val currentSession = getSession() ?: return
+        val updatedSession = currentSession.copy(
+            accessToken = accessToken,
+            expiresAt = expiresAt
+        )
+        saveSession(updatedSession)
     }
     
     override fun isSessionValid(): Boolean {
         return runBlocking {
-            dataStore.data.map { preferences ->
-                val expiresAt = preferences[EXPIRES_AT_KEY] ?: return@map false
-                val currentTime = getCurrentTimeMillis() / 1000
-                currentTime < expiresAt
-            }.first()
+            val session = getSession() ?: return@runBlocking false
+            val currentTime = getCurrentTimeMillis() / 1000
+            currentTime < session.expiresAt
         }
     }
     
     companion object {
-        private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
-        private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
-        private val EXPIRES_AT_KEY = longPreferencesKey("expires_at")
-        private val USER_JSON_KEY = stringPreferencesKey("user_json")
+        private val SESSION_DATA_KEY = stringPreferencesKey("session_data")
     }
 }

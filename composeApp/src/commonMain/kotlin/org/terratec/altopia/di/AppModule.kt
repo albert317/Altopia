@@ -23,7 +23,15 @@ import org.terratec.altopia.data.remote.api.ReceiptApiService
 import org.terratec.altopia.data.remote.api.ReceiptApiServiceImpl
 import org.terratec.altopia.data.remote.api.ExpenseApiService
 import org.terratec.altopia.data.remote.api.ExpenseApiServiceImpl
+import org.terratec.altopia.domain.usecase.GetUserRolesUseCase
+import org.terratec.altopia.domain.usecase.GetVideosUseCase
+import org.terratec.altopia.domain.usecase.auth.GetAuthSessionLocalUseCase
+import org.terratec.altopia.domain.usecase.user.GetPersonUseCase
+import org.terratec.altopia.domain.usecase.user.GetUserUseCase
+import org.terratec.altopia.domain.usecase.user.GetUserProfilesUseCase
 import org.terratec.altopia.presentation.features.profile_selection.ProfileSelectionViewModel
+import org.terratec.altopia.presentation.navigation.DeepLinkHandler
+import org.terratec.altopia.presentation.viewmodel.UserViewModel
 
 /**
  * Koin module for application dependencies.
@@ -36,7 +44,7 @@ val appModule = module {
     // ===== API Services =====
     // Inject specific HttpClients for each backend
     single<UserApiService> {
-        UserApiServiceImpl(get(named("jsonPlaceholder")))
+        UserApiServiceImpl(get(named("supabase")))
     }
     single<VideoApiService> {
         VideoApiServiceImpl(get(named("supabase")))
@@ -61,13 +69,18 @@ val appModule = module {
     }
 
     // ===== Use Cases =====
-    factory { org.terratec.altopia.domain.usecase.GetUserUseCase(get()) }
-    factory { org.terratec.altopia.domain.usecase.GetVideosUseCase(get()) }
+    factory { GetVideosUseCase(get()) }
+    factory { GetUserRolesUseCase(get()) }
+    factory { GetAuthSessionLocalUseCase(get()) }
+    factory { GetPersonUseCase(get()) }
+    factory { GetUserUseCase(get()) }
+    factory { GetUserProfilesUseCase(get()) }
+
 
     // ===== ViewModels =====
-    single { org.terratec.altopia.presentation.viewmodel.UserViewModel(get(), get()) }
+    viewModelOf(::UserViewModel)
     viewModelOf(::SplashViewModel)
-    single { org.terratec.altopia.presentation.navigation.DeepLinkHandler(get()) }
+    viewModelOf(::DeepLinkHandler)
     
     viewModelOf(::LoginViewModel)
     viewModelOf(::HomeViewModel)
