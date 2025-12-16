@@ -33,16 +33,12 @@ abstract class BaseViewModel<UI_STATE, INTENT, EVENT> : ViewModel() {
         viewModelScope.launch {
             try {
                 intents.collect { intent ->
-                    // Lanzar cada intent en su propia coroutina para procesamiento paralelo
-                    // Esto previene que intents lentos bloqueen intents rápidos
-                    launch {
-                        try {
-                            handleIntent(intent)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            // Los errores en handleIntent se capturan aquí
-                            // para que no afecten el flujo de otros intents
-                        }
+                    try {
+                        handleIntent(intent)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // Los errores en handleIntent se capturan aquí
+                        // para que no afecten el flujo de otros intents
                     }
                 }
             } catch (e: Exception) {
@@ -71,7 +67,7 @@ abstract class BaseViewModel<UI_STATE, INTENT, EVENT> : ViewModel() {
 
     protected abstract fun createInitialState(): UI_STATE
 
-    protected abstract suspend fun handleIntent(intent: INTENT)
+    protected abstract fun handleIntent(intent: INTENT)
 
     protected fun showDialog(userDialogConfig: DialogInfo) {
         _managedDialogState.value = ManagedDialogConfig(

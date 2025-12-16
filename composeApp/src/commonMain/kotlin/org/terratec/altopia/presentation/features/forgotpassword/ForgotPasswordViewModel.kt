@@ -2,6 +2,7 @@ package org.terratec.altopia.presentation.features.forgotpassword
 
 import org.terratec.altopia.domain.usecase.ForgotPasswordUseCase
 import org.terratec.altopia.presentation.model.DialogInfo
+import org.terratec.altopia.presentation.util.executeTask
 import org.terratec.altopia.presentation.viewmodel.BaseViewModel
 
 /**
@@ -13,7 +14,7 @@ class ForgotPasswordViewModel(
     
     override fun createInitialState(): ForgotPasswordUiState = ForgotPasswordUiState()
     
-    override suspend fun handleIntent(intent: ForgotPasswordIntent) {
+    override fun handleIntent(intent: ForgotPasswordIntent) {
         when (intent) {
             is ForgotPasswordIntent.EmailChanged -> handleEmailChanged(intent.email)
             ForgotPasswordIntent.SubmitEmail -> handleSubmitEmail()
@@ -31,7 +32,7 @@ class ForgotPasswordViewModel(
         }
     }
     
-    private suspend fun handleSubmitEmail() {
+    private fun handleSubmitEmail() {
         val currentState = uiState.value
         
         // Basic validation
@@ -47,8 +48,8 @@ class ForgotPasswordViewModel(
         
         setUiState { copy(isLoading = true) }
         
-        forgotPasswordUseCase(currentState.email)
-            .onSuccess {
+        executeTask(
+            onSuccess = {
                 setUiState { copy(isLoading = false) }
                 showDialog(
                     DialogInfo(
@@ -60,14 +61,17 @@ class ForgotPasswordViewModel(
                         }
                     )
                 )
-            }
-            .onFailure { error ->
+            },
+            onFailure = { error ->
                 setUiState {
                     copy(
                         isLoading = false,
-                        errorMessage = error.message ?: "Error al enviar el correo"
+                        errorMessage = error.message
                     )
                 }
             }
+        ) {
+            forgotPasswordUseCase(currentState.email).getOrThrow()
+        }
     }
 }

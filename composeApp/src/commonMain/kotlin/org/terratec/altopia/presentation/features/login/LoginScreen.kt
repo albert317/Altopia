@@ -24,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,7 +32,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -56,11 +59,15 @@ import org.terratec.altopia.presentation.ui.theme.AppTheme
 @Composable
 fun LoginScreen(
     onNavigateToHome: (AuthSession) -> Unit,
-    onNavigateToForgotPassword: () -> Unit = {},
+    onNavigateToForgotPassword: () -> Unit,
+    onNavigateToProfileSelection: () -> Unit,
+    onNavigateToAdminDashboard: () -> Unit,
     viewModel: LoginViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val dialogState by viewModel.managedDialogState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Event collection
     LaunchedEffect(Unit) {
@@ -68,8 +75,12 @@ fun LoginScreen(
             when (event) {
                 is LoginEvent.NavigateToHome -> onNavigateToHome(event.session)
                 LoginEvent.NavigateToForgotPassword -> onNavigateToForgotPassword()
+                LoginEvent.NavigateToProfileSelection -> onNavigateToProfileSelection()
+                LoginEvent.NavigateToAdminDashboard -> onNavigateToAdminDashboard()
                 is LoginEvent.ShowToast -> {
-                    // TODO: Implement toast system if needed
+                    scope.launch {
+                        snackbarHostState.showSnackbar(event.message)
+                    }
                 }
             }
         }

@@ -1,5 +1,7 @@
 package org.terratec.altopia.presentation.features.login
 
+import org.terratec.altopia.domain.model.AuthSession
+
 /**
  * User intentions/actions for Login screen.
  * Represents all possible user interactions.
@@ -29,4 +31,9 @@ sealed interface LoginIntent {
      * User clicked forgot password link.
      */
     data object ForgotPasswordClicked : LoginIntent
+
+    // Chained Intents for Post-Login Validation
+    data class CheckPerson(val session: AuthSession) : LoginIntent
+    data class CheckUser(val personId: String, val session: AuthSession) : LoginIntent
+    data class CheckProfiles(val businessUserId: String, val session: AuthSession) : LoginIntent
 }

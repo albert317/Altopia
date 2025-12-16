@@ -11,6 +11,8 @@ sealed interface LoginEvent {
      * Navigate to home screen after successful login.
      */
     data class NavigateToHome(val session: AuthSession) : LoginEvent
+    data object NavigateToProfileSelection : LoginEvent
+    data object NavigateToAdminDashboard : LoginEvent
     
     /**
      * Navigate to forgot password screen.

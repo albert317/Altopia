@@ -18,7 +18,7 @@ import org.terratec.altopia.presentation.features.forgotpassword.ForgotPasswordV
 import org.terratec.altopia.presentation.features.login.LoginViewModel
 import org.terratec.altopia.presentation.features.resetpassword.ResetPasswordViewModel
 import org.terratec.altopia.presentation.features.home.HomeViewModel
-import org.terratec.altopia.presentation.viewmodel.SplashViewModel
+import org.terratec.altopia.presentation.features.splash.SplashViewModel
 import org.terratec.altopia.data.remote.api.ReceiptApiService
 import org.terratec.altopia.data.remote.api.ReceiptApiServiceImpl
 import org.terratec.altopia.data.remote.api.ExpenseApiService

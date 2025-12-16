@@ -164,7 +164,7 @@ Define el estado inicial del ViewModel.
 
 #### handleIntent
 ```kotlin
-protected abstract suspend fun handleIntent(intent: INTENT)
+protected abstract fun handleIntent(intent: INTENT)
 ```
 Procesa las intenciones del usuario.
 
@@ -506,7 +506,7 @@ class LoginViewModel(
 
     override fun createInitialState(): LoginUiState = LoginUiState()
 
-    override suspend fun handleIntent(intent: LoginIntent) {
+    override fun handleIntent(intent: LoginIntent) {
         when (intent) {
             is LoginIntent.EmailChanged -> handleEmailChanged(intent.email)
             is LoginIntent.PasswordChanged -> handlePasswordChanged(intent.password)
@@ -835,6 +835,7 @@ private fun LoginContent(
 - Toda la lógica en `handleIntent`
 - Usar `setUiState { copy(...) }`
 - **Llamar UseCases para consumos de API y lógica de negocio**
+- **Usar `executeTask` independiente para cada UseCase (evitar múltiples llamadas en un mismo bloque)**
 - Manejo de errores consistente usando `runCatching` o `Result` del UseCase
 - Usar `viewModelScope` para corrutinas
 
@@ -986,4 +987,62 @@ data class BusinessError(
     val success: Boolean = false,
     val codeMessage: String
 ) : Throwable(message)
+
+> [!IMPORTANT]
+> **Granularidad**: Cada llamada a `executeTask` debe encapsular **una sola** operación o UseCase principal.
+> - **Correcto**: `executeTask { loginUseCase(...) }`
+> - **Incorrecto**: `executeTask { loginUseCase(...); getUserProfile(...) }`
+>
+> Si necesitas encadenar operaciones, usa el patrón de **Chained Intents** descrito en la sección 10.
+
+---
+
+## 10. Patrones Avanzados
+
+### 10.1 Chained Intents (Intents Encadenados)
+
+Cuando una operación lógica requiere múltiples pasos asíncronos secuenciales (ej: validación en cadena), se recomienda el patrón de **Chained Intents** o Intents Encadenados.
+
+**Problema:**
+Tener un solo método en el ViewModel que realice múltiples llamadas a UseCases (`UseCaseA` -> `UseCaseB` -> `UseCaseC`) puede crear funciones monolíticas difíciles de testear y con manejo de errores complejo.
+
+**Solución:**
+Descomponer la operación en pasos discretos, donde cada paso es un `Intent`. Al finalizar un paso exitosamente, el ViewModel emite un `Intent` para el siguiente paso.
+
+**Ejemplo de Flujo:**
+
+1. `CheckSession` -> llama a `GetSessionUseCase`.
+2. Si hay sesión -> `setIntent(CheckPerson(session))`.
+3. `CheckPerson` -> llama a `GetPersonUseCase`.
+4. Si hay persona -> `setIntent(CheckUser(person))`... y así sucesivamente.
+
+**Ventajas:**
+- **Granularidad:** Cada paso es independiente y testeable.
+- **Claridad:** El flujo es explícito en `handleIntent`.
+- **Manejo de Errores:** Cada paso puede manejar sus propios errores o abortar la cadena.
+- **No Bloqueante:** Se adapta perfectamente al modelo de `executeTask` o `launch` sin anidar corrutinas profundamente.
+
+**Implementación:**
+
+Definir intents para cada paso, incluso si son internos (no disparados directamente por la UI):
+
+```kotlin
+sealed interface SplashIntent {
+    data object CheckSession : SplashIntent
+    data class CheckPerson(val session: AuthSession) : SplashIntent
+    data class CheckUser(val personId: String, val session: AuthSession) : SplashIntent
+}
+```
+
+Manejar cada intent por separado:
+
+```kotlin
+override fun handleIntent(intent: SplashIntent) {
+    when (intent) {
+        SplashIntent.CheckSession -> handleCheckSession()
+        is SplashIntent.CheckPerson -> handleCheckPerson(intent.session)
+        is SplashIntent.CheckUser -> handleCheckUser(intent.personId, intent.session)
+    }
+}
+```
 ```

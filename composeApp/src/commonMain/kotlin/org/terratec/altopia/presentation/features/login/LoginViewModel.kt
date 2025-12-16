@@ -1,6 +1,9 @@
 package org.terratec.altopia.presentation.features.login
 
 import org.terratec.altopia.domain.usecase.auth.LoginUseCase
+import org.terratec.altopia.domain.usecase.user.GetPersonUseCase
+import org.terratec.altopia.domain.usecase.user.GetUserProfilesUseCase
+import org.terratec.altopia.domain.usecase.user.GetUserUseCase
 import org.terratec.altopia.presentation.model.DialogInfo
 import org.terratec.altopia.presentation.util.executeTask
 import org.terratec.altopia.presentation.viewmodel.BaseViewModel
@@ -10,18 +13,27 @@ import org.terratec.altopia.presentation.viewmodel.BaseViewModel
  * Handles user authentication with email and password.
  */
 class LoginViewModel(
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
+    private val getPersonUseCase: GetPersonUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val getUserProfilesUseCase: GetUserProfilesUseCase
 ) : BaseViewModel<LoginUiState, LoginIntent, LoginEvent>() {
 
     override fun createInitialState(): LoginUiState = LoginUiState()
 
-    override suspend fun handleIntent(intent: LoginIntent) {
+    override fun handleIntent(intent: LoginIntent) {
         when (intent) {
             is LoginIntent.EmailChanged -> handleEmailChanged(intent.email)
             is LoginIntent.PasswordChanged -> handlePasswordChanged(intent.password)
             LoginIntent.SubmitCredentials -> handleSubmitCredentials()
             LoginIntent.ClearError -> handleClearError()
             LoginIntent.ForgotPasswordClicked -> handleForgotPassword()
+            is LoginIntent.CheckPerson -> handleCheckPerson(intent.session)
+            is LoginIntent.CheckUser -> handleCheckUser(intent.personId, intent.session)
+            is LoginIntent.CheckProfiles -> handleCheckProfiles(
+                intent.businessUserId,
+                intent.session
+            )
         }
     }
 
@@ -47,7 +59,7 @@ class LoginViewModel(
 
     private fun handleSubmitCredentials() {
         val currentState = uiState.value
-        
+
         // Validación de credenciales
         if (!validateCredentials(currentState)) {
             return
@@ -61,8 +73,7 @@ class LoginViewModel(
 
         executeTask(
             onSuccess = { session ->
-                setUiState { copy(isLoading = false) }
-                setEvent(LoginEvent.NavigateToHome(session))
+                setIntent(LoginIntent.CheckPerson(session))
             },
             onFailure = { error ->
                 setUiState {
@@ -73,9 +84,99 @@ class LoginViewModel(
                 }
                 showLoginErrorDialog(error.message)
             }
-        ){
+        ) {
             loginUseCase(email, password).getOrThrow()
         }
+    }
+
+    private fun handleCheckPerson(session: org.terratec.altopia.domain.model.AuthSession) {
+        if (session.user != null) {
+            executeTask(
+                onSuccess = { person ->
+                    setIntent(LoginIntent.CheckUser(personId = person.id, session = session))
+                },
+                onFailure = {
+                    handleLoginPostError("Persona no encontrada")
+                }
+            ) {
+                getPersonUseCase(session.user.id).getOrThrow()
+            }
+        } else {
+            handleLoginPostError("Sesión inválida")
+        }
+    }
+
+    private fun handleCheckUser(
+        personId: String,
+        session: org.terratec.altopia.domain.model.AuthSession
+    ) {
+        executeTask(
+            onSuccess = { businessUser ->
+                setIntent(
+                    LoginIntent.CheckProfiles(
+                        businessUserId = businessUser.id,
+                        session = session
+                    )
+                )
+            },
+            onFailure = {
+                handleLoginPostError("Usuario de negocio no encontrado")
+            }
+        ) {
+            getUserUseCase(personId).getOrThrow()
+        }
+    }
+
+    private fun handleCheckProfiles(
+        businessUserId: String,
+        session: org.terratec.altopia.domain.model.AuthSession
+    ) {
+        executeTask(
+            onSuccess = { profiles ->
+                processProfiles(profiles, session)
+                setUiState { copy(isLoading = false) }
+            },
+            onFailure = {
+                handleLoginPostError("Error obteniendo perfiles")
+            }
+        ) {
+            getUserProfilesUseCase(businessUserId).getOrThrow()
+        }
+    }
+
+    private fun processProfiles(
+        profiles: List<org.terratec.altopia.domain.model.UserProfile>,
+        session: org.terratec.altopia.domain.model.AuthSession
+    ) {
+        // Lógica de diagrama
+        val adminProfile =
+            profiles.find { it.profileType == "ADMINISTRADOR" || it.profileType == "ADMIN" }
+
+        if (adminProfile != null && profiles.size == 1) {
+            // Solo perfil administrador -> DashboardScreen
+            setEvent(LoginEvent.NavigateToAdminDashboard)
+            return
+        }
+
+        if (profiles.size > 1) {
+            // Más de un perfil -> ProfileSelectionScreen
+            setEvent(LoginEvent.NavigateToProfileSelection)
+            return
+        }
+
+        if (profiles.isNotEmpty()) {
+            // Un perfil propietario (o inquilino/familiar) -> HomeScreen
+            setEvent(LoginEvent.NavigateToHome(session))
+        } else {
+            handleLoginPostError("Usuario sin perfiles asignados")
+        }
+    }
+
+    private fun handleLoginPostError(message: String) {
+        setUiState {
+            copy(isLoading = false, errorMessage = message)
+        }
+        showLoginErrorDialog(message)
     }
 
     private fun validateCredentials(state: LoginUiState): Boolean {

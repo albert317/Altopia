@@ -1,8 +1,7 @@
 package org.terratec.altopia.domain.model
 
 import kotlinx.serialization.Serializable
-import org.terratec.altopia.domain.model.Role
-import org.terratec.altopia.domain.model.Property
+
 
 /**
  * Represents an authenticated user session.

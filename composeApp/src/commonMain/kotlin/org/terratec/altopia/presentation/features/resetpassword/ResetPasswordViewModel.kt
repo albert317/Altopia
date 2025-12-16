@@ -2,6 +2,7 @@ package org.terratec.altopia.presentation.features.resetpassword
 
 import org.terratec.altopia.domain.usecase.UpdatePasswordUseCase
 import org.terratec.altopia.presentation.model.DialogInfo
+import org.terratec.altopia.presentation.util.executeTask
 import org.terratec.altopia.presentation.viewmodel.BaseViewModel
 
 /**
@@ -14,7 +15,7 @@ class ResetPasswordViewModel(
     
     override fun createInitialState(): ResetPasswordUiState = ResetPasswordUiState()
     
-    override suspend fun handleIntent(intent: ResetPasswordIntent) {
+    override fun handleIntent(intent: ResetPasswordIntent) {
         when (intent) {
             is ResetPasswordIntent.PasswordChanged -> {
                 setUiState { copy(password = intent.password, errorMessage = null) }
@@ -27,7 +28,7 @@ class ResetPasswordViewModel(
         }
     }
     
-    private suspend fun handleSubmit() {
+    private fun handleSubmit() {
         val currentState = uiState.value
         
         // Validation
@@ -48,11 +49,18 @@ class ResetPasswordViewModel(
         
         setUiState { copy(isLoading = true) }
         
-        updatePasswordUseCase(currentState.password)
-            .onSuccess {
+        executeTask(
+            onSuccess = {
                 // Clear the temporary session
-                logoutUseCase()
-                
+                try {
+                     // Ideally logoutUseCase should be async too or use executeTask properly if suspending
+                     // But inside onSuccess we are on Main thread. 
+                     // We should include logout in the task lambda or do it separately.
+                     // IMPORTANT: The original code had logout AFTER updatePassword success.
+                } catch(e: Exception) {
+                     // ignore check
+                }
+
                 setUiState { copy(isLoading = false, isSuccess = true) }
                 showDialog(
                     DialogInfo(
@@ -64,8 +72,8 @@ class ResetPasswordViewModel(
                         }
                     )
                 )
-            }
-            .onFailure { error ->
+            },
+            onFailure = { error ->
                 setUiState {
                     copy(
                         isLoading = false,
@@ -73,5 +81,11 @@ class ResetPasswordViewModel(
                     )
                 }
             }
+        ) {
+             updatePasswordUseCase(currentState.password).getOrThrow()
+             // Since logout is also likely suspending or critical, we should do it here if possible.
+             // But if LogoutUseCase needs to be run, we can chain it.
+             logoutUseCase()
+        }
     }
 }

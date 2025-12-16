@@ -15,6 +15,5 @@ data class User(
     val createdAt: String,
     val updatedAt: String,
     val isAnonymous: Boolean = false,
-    val appRoles: List<Role> = emptyList(),
-    val properties: List<Property> = emptyList()
+
 )
