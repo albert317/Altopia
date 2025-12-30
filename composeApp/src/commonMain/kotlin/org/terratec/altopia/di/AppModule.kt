@@ -8,12 +8,18 @@ import org.terratec.altopia.data.remote.api.UserApiService
 import org.terratec.altopia.data.remote.api.UserApiServiceImpl
 import org.terratec.altopia.data.remote.api.VideoApiService
 import org.terratec.altopia.data.remote.api.VideoApiServiceImpl
+import org.terratec.altopia.data.remote.api.DashboardApiService
+import org.terratec.altopia.data.remote.api.DashboardApiServiceImpl
 import org.terratec.altopia.data.remote.datasource.UserRemoteDataSource
 import org.terratec.altopia.data.remote.datasource.UserRemoteDataSourceImpl
 import org.terratec.altopia.data.remote.datasource.VideoRemoteDataSource
 import org.terratec.altopia.data.remote.datasource.VideoRemoteDataSourceImpl
+import org.terratec.altopia.data.remote.datasource.DashboardRemoteDataSource
+import org.terratec.altopia.data.remote.datasource.DashboardRemoteDataSourceImpl
 import org.terratec.altopia.data.repository.UserRepositoryImpl
+import org.terratec.altopia.data.repository.DashboardRepositoryImpl
 import org.terratec.altopia.domain.repository.UserRepository
+import org.terratec.altopia.domain.repository.DashboardRepository
 import org.terratec.altopia.presentation.features.forgotpassword.ForgotPasswordViewModel
 import org.terratec.altopia.presentation.features.login.LoginViewModel
 import org.terratec.altopia.presentation.features.resetpassword.ResetPasswordViewModel
@@ -29,9 +35,11 @@ import org.terratec.altopia.domain.usecase.auth.GetAuthSessionLocalUseCase
 import org.terratec.altopia.domain.usecase.user.GetPersonUseCase
 import org.terratec.altopia.domain.usecase.user.GetUserUseCase
 import org.terratec.altopia.domain.usecase.user.GetUserProfilesUseCase
+import org.terratec.altopia.domain.usecase.GetDashboardStatsUseCase
 import org.terratec.altopia.presentation.features.profile_selection.ProfileSelectionViewModel
 import org.terratec.altopia.presentation.navigation.DeepLinkHandler
 import org.terratec.altopia.presentation.viewmodel.UserViewModel
+import org.terratec.altopia.presentation.features.admindashboard.AdminDashboardViewModel
 
 /**
  * Koin module for application dependencies.
@@ -50,11 +58,17 @@ val appModule = module {
         VideoApiServiceImpl(get(named("supabase")))
     }
     single<ReceiptApiService> { ReceiptApiServiceImpl() }
+    single<ReceiptApiService> { ReceiptApiServiceImpl() }
     single<ExpenseApiService> { ExpenseApiServiceImpl() }
+    single<DashboardApiService> { 
+        DashboardApiServiceImpl(get(named("supabase"))) 
+    }
 
     // ===== Data Sources =====
     single<UserRemoteDataSource> { UserRemoteDataSourceImpl(get()) }
+    single<UserRemoteDataSource> { UserRemoteDataSourceImpl(get()) }
     single<VideoRemoteDataSource> { VideoRemoteDataSourceImpl(get()) }
+    single<DashboardRemoteDataSource> { DashboardRemoteDataSourceImpl(get()) }
 
     // ===== Mappers =====
     single { UserMapper }
@@ -67,6 +81,17 @@ val appModule = module {
             mapper = get()
         )
     }
+    single<UserRepository> {
+        UserRepositoryImpl(
+            userRemoteDataSource = get(),
+            videoRemoteDataSource = get(),
+            mapper = get()
+        )
+    }
+    
+    single<DashboardRepository> {
+        DashboardRepositoryImpl(get())
+    }
 
     // ===== Use Cases =====
     factory { GetVideosUseCase(get()) }
@@ -74,7 +99,9 @@ val appModule = module {
     factory { GetAuthSessionLocalUseCase(get()) }
     factory { GetPersonUseCase(get()) }
     factory { GetUserUseCase(get()) }
+    factory { GetUserUseCase(get()) }
     factory { GetUserProfilesUseCase(get()) }
+    factory { GetDashboardStatsUseCase(get()) }
 
 
     // ===== ViewModels =====
@@ -86,5 +113,7 @@ val appModule = module {
     viewModelOf(::HomeViewModel)
     viewModelOf(::ForgotPasswordViewModel)
     viewModelOf(::ResetPasswordViewModel)
+    viewModelOf(::ResetPasswordViewModel)
     viewModelOf(::ProfileSelectionViewModel)
+    viewModelOf(::AdminDashboardViewModel)
 }

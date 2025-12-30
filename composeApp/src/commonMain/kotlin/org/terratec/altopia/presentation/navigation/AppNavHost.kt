@@ -12,6 +12,7 @@ import org.terratec.altopia.presentation.features.login.LoginScreen
 import org.terratec.altopia.presentation.features.home.HomeScreen
 import org.terratec.altopia.presentation.features.profile_selection.ProfileSelectionScreen
 import org.terratec.altopia.presentation.features.splash.SplashScreen
+import org.terratec.altopia.presentation.features.admindashboard.AdminDashboardScreen
 
 import org.terratec.altopia.domain.model.AuthSession
 
@@ -61,28 +62,9 @@ fun AppNavHost(
                     }
                 },
                 onNavigateToAdminDashboard = {
-                    // TODO: Create Route.AdminDashboard
-                    // For now, redirect to Home or ProfileSelection if Admin Dashboard not ready
-                    // Assuming Route.Home for now or maybe we need to create it?
-                    // Let's use ProfileSelection as temporary fallback if Admin route missing, 
-                    // or check Route definition.
-                    // User request says "Ir a DashBoardScreen".
-                    // I will Assume Route.Dashboard exists or I need to create it.
-                    // Checking existing code, I don't see Route.Dashboard.
-                    // I'll use a placeholder or check Route definition in next step.
-                    // For now, I will map it to Route.Home but with a comment, 
-                    // OR better, I should check Route definition BEFORE this edit.
-                    // The snippet showed Route.Splash, Route.ProfileSelection, Route.Home.
-                    // I will use Route.Home for Dashboard for now if it doesn't exist, 
-                    // but wait, I should verify Route class first. 
-                    // BUT, I can't do two view_file in parallel if I want to edit AppNavHost now.
-                    // I will safely assume I need to navigate somewhere.
-                    // Let's go to ProfileSelection for Admin as well for now if Dashboard is missing,
-                    // OR if I can find Route definition in this file. 
-                    // The file View shows no Route class definition inside AppNavHost.kt (it is likely in Route.kt).
-                    // I'll stick to Route.ProfileSelection or Route.Home for now and add TODO.
-                    navController.navigate(Route.ProfileSelection) {
-                         popUpTo(Route.Splash) { inclusive = true }
+                    // Route.Dashboard exists now.
+                    navController.navigate(Route.AdminDashboard) {
+                        popUpTo(Route.Splash) { inclusive = true }
                     }
                 }
             )
@@ -105,8 +87,7 @@ fun AppNavHost(
                     }
                 },
                 onNavigateToAdminDashboard = {
-                    // TODO: Implement Admin Dashboard Navigation
-                    navController.navigate(Route.ProfileSelection) {
+                    navController.navigate(Route.AdminDashboard) {
                         popUpTo(Route.Login) { inclusive = true }
                     }
                 }
@@ -152,9 +133,20 @@ fun AppNavHost(
                     }
                 },
                 onNavigateToAdminDashboard = {
-                    // TODO: Implement Admin Dashboard Navigation
-                    // For now, go to Home as fallback or show placeholder
+                    navController.navigate(Route.AdminDashboard) {
+                        popUpTo(Route.ProfileSelection) { inclusive = true }
+                    }
                 }
+            )
+        }
+
+        composable<Route.AdminDashboard> {
+            AdminDashboardScreen(
+                onNavigateToUnits = { /* TODO */ },
+                onNavigateToUsers = { /* TODO */ },
+                onNavigateToDistribution = { /* TODO */ },
+                onNavigateToExpenses = { /* TODO */ },
+                onNavigateToTransactions = { /* TODO */ }
             )
         }
     }

@@ -24,4 +24,7 @@ sealed interface Route {
 
     @Serializable
     data object ProfileSelection : Route
+
+    @Serializable
+    data object AdminDashboard : Route
 }
