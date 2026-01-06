@@ -29,6 +29,12 @@ import org.terratec.altopia.data.remote.api.ReceiptApiService
 import org.terratec.altopia.data.remote.api.ReceiptApiServiceImpl
 import org.terratec.altopia.data.remote.api.ExpenseApiService
 import org.terratec.altopia.data.remote.api.ExpenseApiServiceImpl
+import org.terratec.altopia.data.remote.api.UnitApiService
+import org.terratec.altopia.data.remote.api.UnitApiServiceImpl
+import org.terratec.altopia.data.remote.datasource.UnitRemoteDataSource
+import org.terratec.altopia.data.remote.datasource.UnitRemoteDataSourceImpl
+import org.terratec.altopia.data.repository.UnitRepositoryImpl
+import org.terratec.altopia.domain.repository.UnitRepository
 import org.terratec.altopia.domain.usecase.GetUserRolesUseCase
 import org.terratec.altopia.domain.usecase.GetVideosUseCase
 import org.terratec.altopia.domain.usecase.auth.GetAuthSessionLocalUseCase
@@ -36,10 +42,16 @@ import org.terratec.altopia.domain.usecase.user.GetPersonUseCase
 import org.terratec.altopia.domain.usecase.user.GetUserUseCase
 import org.terratec.altopia.domain.usecase.user.GetUserProfilesUseCase
 import org.terratec.altopia.domain.usecase.GetDashboardStatsUseCase
+import org.terratec.altopia.domain.usecase.unit.CreateUnitUseCase
+import org.terratec.altopia.domain.usecase.unit.DeleteUnitUseCase
+import org.terratec.altopia.domain.usecase.unit.GetBlocksUseCase
+import org.terratec.altopia.domain.usecase.unit.GetUnitsUseCase
+import org.terratec.altopia.domain.usecase.unit.UpdateUnitUseCase
 import org.terratec.altopia.presentation.features.profile_selection.ProfileSelectionViewModel
 import org.terratec.altopia.presentation.navigation.DeepLinkHandler
 import org.terratec.altopia.presentation.viewmodel.UserViewModel
 import org.terratec.altopia.presentation.features.admindashboard.AdminDashboardViewModel
+import org.terratec.altopia.presentation.features.units.UnitsViewModel
 
 /**
  * Koin module for application dependencies.
@@ -60,8 +72,11 @@ val appModule = module {
     single<ReceiptApiService> { ReceiptApiServiceImpl() }
     single<ReceiptApiService> { ReceiptApiServiceImpl() }
     single<ExpenseApiService> { ExpenseApiServiceImpl() }
-    single<DashboardApiService> { 
-        DashboardApiServiceImpl(get(named("supabase"))) 
+    single<DashboardApiService> {
+        DashboardApiServiceImpl(get(named("supabase")))
+    }
+    single<UnitApiService> {
+        UnitApiServiceImpl(get(named("supabase")))
     }
 
     // ===== Data Sources =====
@@ -69,6 +84,7 @@ val appModule = module {
     single<UserRemoteDataSource> { UserRemoteDataSourceImpl(get()) }
     single<VideoRemoteDataSource> { VideoRemoteDataSourceImpl(get()) }
     single<DashboardRemoteDataSource> { DashboardRemoteDataSourceImpl(get()) }
+    single<UnitRemoteDataSource> { UnitRemoteDataSourceImpl(get()) }
 
     // ===== Mappers =====
     single { UserMapper }
@@ -88,10 +104,11 @@ val appModule = module {
             mapper = get()
         )
     }
-    
+
     single<DashboardRepository> {
         DashboardRepositoryImpl(get())
     }
+    single<UnitRepository> { UnitRepositoryImpl(get()) }
 
     // ===== Use Cases =====
     factory { GetVideosUseCase(get()) }
@@ -102,6 +119,13 @@ val appModule = module {
     factory { GetUserUseCase(get()) }
     factory { GetUserProfilesUseCase(get()) }
     factory { GetDashboardStatsUseCase(get()) }
+
+    // Unit UseCases
+    factory { GetUnitsUseCase(get()) }
+    factory { GetBlocksUseCase(get()) }
+    factory { CreateUnitUseCase(get()) }
+    factory { UpdateUnitUseCase(get()) }
+    factory { DeleteUnitUseCase(get()) }
 
 
     // ===== ViewModels =====
@@ -116,4 +140,5 @@ val appModule = module {
     viewModelOf(::ResetPasswordViewModel)
     viewModelOf(::ProfileSelectionViewModel)
     viewModelOf(::AdminDashboardViewModel)
+    viewModelOf(::UnitsViewModel)
 }

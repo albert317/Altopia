@@ -27,4 +27,7 @@ sealed interface Route {
 
     @Serializable
     data object AdminDashboard : Route
+
+    @Serializable
+    data object Units : Route
 }

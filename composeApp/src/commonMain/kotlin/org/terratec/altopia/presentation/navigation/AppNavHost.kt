@@ -13,6 +13,7 @@ import org.terratec.altopia.presentation.features.home.HomeScreen
 import org.terratec.altopia.presentation.features.profile_selection.ProfileSelectionScreen
 import org.terratec.altopia.presentation.features.splash.SplashScreen
 import org.terratec.altopia.presentation.features.admindashboard.AdminDashboardScreen
+import org.terratec.altopia.presentation.features.units.UnitsScreen // Added import for UnitsScreen
 
 import org.terratec.altopia.domain.model.AuthSession
 
@@ -142,11 +143,17 @@ fun AppNavHost(
 
         composable<Route.AdminDashboard> {
             AdminDashboardScreen(
-                onNavigateToUnits = { /* TODO */ },
+                onNavigateToUnits = { navController.navigate(Route.Units) }, // Implemented navigation to Units
                 onNavigateToUsers = { /* TODO */ },
                 onNavigateToDistribution = { /* TODO */ },
                 onNavigateToExpenses = { /* TODO */ },
                 onNavigateToTransactions = { /* TODO */ }
+            )
+        }
+
+        composable<Route.Units> {
+            UnitsScreen(
+                onNavigateBack = { navController.navigateUp() }
             )
         }
     }
